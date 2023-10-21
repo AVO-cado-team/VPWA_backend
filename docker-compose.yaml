@@ -1,0 +1,103 @@
+version: "3"
+services:
+  service:
+    user: root
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    container_name: service
+    ports:
+      - 443:443
+      - 3000:3000
+      - 80:80
+    networks:
+      service_net:
+        ipv4_address: 10.0.10.102
+      service_auth:
+        ipv4_address: 10.0.1.3
+    depends_on:
+      service_db:
+        condition: service_healthy
+      auth:
+        condition: service_healthy
+    env_file:
+      - .env
+    volumes:
+      - ~/logs/:/root/logs/service:z
+  service_db:
+    image: postgres:16.0
+    container_name: service_db
+    environment:
+      PGPORT: 5434
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "servicems"
+      POSTGRES_DB: "service"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
+      start_period: 5s
+      interval: 1s
+      timeout: 5s
+      retries: 5
+    networks:
+      service_net:
+        ipv4_address: 10.0.10.103
+    volumes:
+      - ~/service_db/:/var/lib/postgresql/data:z
+  auth:
+    user: root
+    container_name: auth
+    build: ../Auth-ms
+    depends_on:
+      auth_db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "/bin/grpc_health_probe", "-addr=:4001"]
+      start_period: 5s
+      interval: 1s
+      timeout: 5s
+      retries: 5
+    networks:
+      auth_net:
+        ipv4_address: 10.0.11.101
+      service_auth:
+        ipv4_address: 10.0.1.4
+    env_file:
+      - auth.env
+    volumes:
+      - ~/logs/:/root/logs/auth:z
+  auth_db:
+    image: postgres:16.0
+    container_name: auth_db
+    environment:
+      PGPORT: 5433
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "authms"
+      POSTGRES_DB: "auth"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
+      start_period: 5s
+      interval: 1s
+      timeout: 5s
+      retries: 5
+    networks:
+      auth_net:
+        ipv4_address: 10.0.11.100
+    volumes:
+      - ~/auth_db/:/var/lib/postgresql/data:z
+
+networks:
+  service_net:
+    ipam:
+      driver: default
+      config:
+        - subnet: 10.0.10.0/24
+  service_auth:
+    ipam:
+      driver: default
+      config:
+        - subnet: 10.0.1.0/24
+  auth_net:
+    ipam:
+      driver: default
+      config:
+        - subnet: 10.0.11.0/24
