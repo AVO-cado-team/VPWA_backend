@@ -1,0 +1,246 @@
+syntax = "proto3";
+
+message Empty {
+}
+
+// --- Models ---
+message RefreshToken {
+    string refreshToken = 1;
+}
+message AccessToken {
+    string accessToken = 1;
+}
+message TokenPair {
+    string accessToken = 1;
+    string refreshToken = 2;
+}
+message UserData {
+    string id = 1;
+    string email = 4;
+}
+message UserDevice {
+    string ip = 1;
+    string os = 2;
+    string browser = 3;
+    string fingerprint = 4;
+}
+message AuthResultOk {
+    TokenPair tokenPair = 1;
+    UserData userData = 2;
+}
+// --- Errors ---
+message EmptyArgumentError {
+    string message = 1;
+}
+message ExternalProviderUnavailableError {
+    string message = 1;
+}
+message InternalError {
+    string message = 1;
+}
+message TokenIsInvalidError {
+    string message = 1;
+}
+message SessionNotExistsError {
+    string message = 1;
+}
+message EmailIsNotVerifiedError {
+    string message = 1;
+}
+message EmailAlreadyExistsError {
+    string message = 1;
+}
+message EmailDoesNotExistError {
+    string message = 1;
+}
+message UserPasswordIsIncorrectError {
+    string message = 1;
+}
+message PassportIsNotValidError {
+    string message = 1;
+}
+message OpenIDTokenError {
+  string message = 1;
+}
+// --- Validate token ---
+message ValidateTokenReultError {
+    oneof result {
+        TokenIsInvalidError tokenIsInvalidError = 1;
+    }
+}
+message ValidateTokenResult {
+    oneof result {
+        UserData ok = 1;
+        ValidateTokenReultError error = 2;
+    }
+}
+// --- Local login ---
+message LocalLoginError {
+    oneof result {
+        EmptyArgumentError emptyArgumentError = 1;
+        EmailDoesNotExistError emailDoesNotExistError = 2;
+        UserPasswordIsIncorrectError userPasswordIsIncorrectError = 3;
+        InternalError internalError = 4;
+    }
+}
+message LocalLoginRequest {
+    string email = 1;
+    string password = 2;
+    UserDevice userDevice = 3;
+}
+message LocalLoginResult {
+    oneof result {
+        AuthResultOk ok = 1;
+        LocalLoginError error = 2;
+    }
+}
+// --- Exchange token ---
+message ExchangeRefreshTokenRequest {
+    string refreshToken = 1;
+    UserDevice userDevice = 2;
+}
+message ExchangeTokenError {
+    oneof result {
+        EmptyArgumentError emptyArgumentError = 1;
+        TokenIsInvalidError tokenIsInvalidError = 2;
+        SessionNotExistsError sessionNotExistsError = 3;
+    }
+}
+message ExchangeRefreshTokenResult {
+    oneof result {
+        TokenPair ok = 1;
+        ExchangeTokenError error = 2;
+    }
+}
+// -- Local register ---
+message LocalRegisterRequest {
+    string email = 1;
+    string password = 2;
+    string name = 3;
+    string surname = 4;
+    UserDevice userDevice = 5;
+}
+message LocalRegisterError {
+    oneof result {
+        EmptyArgumentError emptyArgumentError = 1;
+        EmailAlreadyExistsError emailAlreadyExistsError = 2;
+        PassportIsNotValidError passportIsNotValidError = 3;
+        EmailDoesNotExistError emailDoesNotExistError = 4;
+    }
+} 
+message LocalRegisterResult {
+    oneof result {
+        AuthResultOk ok = 1;
+        LocalRegisterError error = 2;
+    }
+}
+
+message VerifyEmailRequest {
+    string email = 1;
+    string password = 2;
+    string code = 3;
+}
+// --- OpenID ---
+message OpenIDRequest {
+    string credential = 1;
+    UserDevice userDevice = 2;
+}
+message OpenIDError {
+    oneof result {
+        EmptyArgumentError emptyArgumentError = 1;
+        OpenIDTokenError openIDTokenError = 2;
+        EmailIsNotVerifiedError emailIsNotVerifiedError = 3;
+        InternalError internalError = 4;
+    }
+}
+message OpenIDResult {
+    oneof result {
+        AuthResultOk ok = 1;
+        OpenIDError error = 2;
+    }
+}
+// --- OAuth2 ---
+message OAuth2Request {
+    TokenPair googleToken = 1;
+    UserDevice userDevice = 2;
+}
+message OAuth2ResultError {
+    oneof result {
+        EmptyArgumentError emptyArgumentError = 1;
+        ExternalProviderUnavailableError externalProviderUnavailableError = 2;
+        EmailIsNotVerifiedError emailIsNotVerifiedError = 3;
+        InternalError internalError = 4;
+    }
+}
+message OAuth2Result {
+  oneof result {
+    AuthResultOk ok = 1;
+    OAuth2ResultError error = 2;
+  }
+}
+// --- Forget me ---
+message ForgetMeResultError {
+    oneof result {
+        TokenIsInvalidError tokenIsInvalidError = 1;
+        SessionNotExistsError sessionNotExistsError = 2;
+    }
+}
+message ForgetMeResult {
+    oneof result {
+        Empty ok = 1;
+        ForgetMeResultError error = 2;
+    }
+}
+// --- Change password ---
+message ChangePasswordRequest {
+    string accessToken = 1;
+    string oldPassword = 2;
+    string newPassword = 3; 
+}
+message ChangePasswordError {
+    oneof result {
+        TokenIsInvalidError tokenIsInvalidError = 1;
+        InternalError internalError = 2;
+        UserPasswordIsIncorrectError userPasswordIsIncorrectError = 3;
+        PassportIsNotValidError passportIsNotValidError = 4;
+    }
+}
+message ChangePasswordResult {
+    oneof result {
+        Empty ok = 1;
+        ChangePasswordError error = 2;
+    }
+}
+// --- Logout ---
+message LogoultResultError {
+    oneof result {
+        TokenIsInvalidError tokenIsInvalidError = 2;
+        SessionNotExistsError sessionNotExistsError = 3;
+    }
+}
+message LogoutResult {
+    oneof result {
+        Empty ok = 1;
+        LogoultResultError error = 2;
+    }
+}
+
+
+service Auth {
+    rpc authGoogleOAuth2 (OAuth2Request) returns (OAuth2Result); // Using user consent tokens, get user data from google and create new user or get existing, return token pair
+    rpc authGoogleOpenID (OpenIDRequest) returns (OpenIDResult); // Using google credential token, validate this token and create new user or get existing, return token pair
+    rpc validateAccessToken (AccessToken) returns (ValidateTokenResult); 
+    rpc exchangeRefreshToken (ExchangeRefreshTokenRequest) returns (ExchangeRefreshTokenResult); // Get new token pair from refresh token rpc logout (RefreshToken) returns (LogoutResult); // Delete refresh token from db = session is over
+    rpc logout (RefreshToken) returns (LogoutResult); // Delete refresh token from db = session is over
+}
+
+service LocalAuth {
+    rpc register (LocalRegisterRequest) returns (LocalRegisterResult); // Register user with email and password. Send email with verification code
+    rpc login (LocalLoginRequest) returns (LocalLoginResult); // Login user with email and password. Return token pair
+//    rpc sendEmailVerification (LocalLoginRequest) returns (Empty); // Not implemented
+//    rpc verifyEmail (VerifyEmailRequest) returns (Empty); // Not implemented
+    rpc changePassword (ChangePasswordRequest) returns (ChangePasswordResult); 
+    // TODO: Consider using this method with refresh token, not access
+    rpc forgetMe (AccessToken) returns (ForgetMeResult); // Delete user from Local Provider, delete all sessions, if user has external providers - his data related to them will not be deleted
+}
+

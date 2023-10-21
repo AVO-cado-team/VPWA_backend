@@ -1,0 +1,83 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum MESSAGE_TYPE {
+  TEXT
+  NEW_CHANNEL
+  JOIN_CHANNEL
+  LEAVE_CHANNEL
+  KICK_USER
+  INVITE_USER
+  BAN_USER
+  REVOKE_USER
+}
+
+enum CHAT_USER_RELATION {
+  ADMIN
+  USER
+  KICKED
+  BANNED
+  INVITED
+}
+
+model Chat {
+  id        String        @id @default(uuid()) @db.Uuid
+  chatname  String        @unique @db.VarChar(256)
+  title     String        @db.VarChar(256)
+  isPrivate Boolean
+  admin     User          @relation("Admin", fields: [adminId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+  adminId   String        @db.Uuid
+  users     UserOnChats[]
+  messages  Message[]
+  UserKicks UserKicks[]
+}
+
+model User {
+  id       String        @id @default(uuid()) @db.Uuid
+  username String        @unique @db.VarChar(256)
+  admin    Chat[]        @relation("Admin")
+  chats    UserOnChats[]
+  messages Message[]
+  kicked   UserKicks[]   @relation("kicked")
+  kicker   UserKicks[]   @relation("kicker")
+}
+
+model UserKicks {
+  chatId   String @db.Uuid
+  chat     Chat   @relation(fields: [chatId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+  kickerId String @db.Uuid
+  kicker   User   @relation("kicker", fields: [kickerId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+  kickedId String @db.Uuid
+  kicked   User   @relation("kicked", fields: [kickedId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+
+  @@id([chatId, kickerId, kickedId])
+}
+
+model UserOnChats {
+  userId    String             @db.Uuid
+  user      User               @relation(fields: [userId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+  chatId    String             @db.Uuid
+  chat      Chat               @relation(fields: [chatId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+  createdAt DateTime           @default(now())
+  updatedAt DateTime?          @updatedAt
+  relation  CHAT_USER_RELATION
+
+  @@id([userId, chatId])
+}
+
+model Message {
+  id          String       @id @default(uuid()) @db.Uuid
+  text        String       @db.VarChar(1000)
+  date        DateTime     @default(now())
+  messageType MESSAGE_TYPE
+  userId      String       @db.Uuid
+  user        User         @relation(fields: [userId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+  chatId      String       @db.Uuid
+  chat        Chat         @relation(fields: [chatId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+}
