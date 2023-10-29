@@ -56,7 +56,7 @@ const tokenRefresh = {
   title: "Refresh token",
   description: "Refresh token.",
   response: {
-    200: { AuthResponse },
+    200: AuthResponse,
     "4xx": GeneralErrorDTO,
     "5xx": GeneralErrorDTO,
   },
@@ -81,7 +81,7 @@ const register = {
   description: "Register new user",
   body: RegisterRequest,
   response: {
-    200: { AuthResponse },
+    200: AuthResponse,
     "4xx": GeneralErrorDTO,
     "5xx": GeneralErrorDTO,
   },
@@ -95,7 +95,7 @@ const login = {
     "Login with username and password if user was registered manualy instead of using Google Auth",
   body: LoginRequest,
   response: {
-    200: { AuthResponse },
+    200: AuthResponse,
     "4xx": GeneralErrorDTO,
     "5xx": GeneralErrorDTO,
   },

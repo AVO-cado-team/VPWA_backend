@@ -17,7 +17,7 @@ const tokenRefresh: FastifyHandler = async (request, reply) => {
       });
 
   const userDevice: UserDeviceDTO = {
-    ip: request.ip ?? "",
+    ip: request.ip,
     os: request.userAgent?.os.toString() ?? "",
     browser: request.userAgent?.toString() ?? "",
     fingerprint: "",

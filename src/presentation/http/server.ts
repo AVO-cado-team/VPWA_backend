@@ -10,7 +10,7 @@ import { log } from "#infrastructure/log.js";
 import rateLimit from "@fastify/rate-limit";
 import fastifyCookie from "@fastify/cookie";
 import oauth2 from "@fastify/oauth2";
-import helmet from "@fastify/helmet";
+// import helmet from "@fastify/helmet";
 import process from "node:process";
 import { fastify } from "fastify";
 import env from "#config/env.js";
@@ -32,17 +32,17 @@ const server = fastify(fastifyOptions);
 
 try {
   server.setErrorHandler(errorHandler);
-  await server.register(cors, corsOptions);
   await server.register(fastifyCookie, cookieOptions);
   await server.register(underPressure, underPressureOptions);
   await server.register(rateLimit, rateLimitOptions);
   await server.register(fastifySwagger, fastifySwaggerOptions);
-  await server.register(helmet, { contentSecurityPolicy: false });
+  // await server.register(helmet, { contentSecurityPolicy: false });
   await server.register(fastifySwaggerUi, { routePrefix: "/docs" });
   await server.register(oauth2, oAuth2Options);
   await server.register(fastifyUserAgent);
   await server.register(fastifyAutoload, autoloadOptions);
   await server.register(authPlugin);
+  await server.register(cors, corsOptions);
   await server.ready();
 
   server.swagger({ yaml: true });

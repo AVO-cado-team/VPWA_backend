@@ -36,6 +36,7 @@
     "@fastify/helmet": "^11.1.0",
     "@fastify/oauth2": "^7.5.0",
     "@fastify/rate-limit": "^8.0.3",
+    "@fastify/response-validation": "^2.5.0",
     "@fastify/swagger": "^8.11.0",
     "@fastify/swagger-ui": "^1.10.0",
     "@fastify/type-provider-typebox": "^3.5.0",
