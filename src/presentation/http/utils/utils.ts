@@ -1,4 +1,3 @@
-import type { TokenPairDTO } from "#application/dtos.js";
 import type { CookieSerializeOptions } from "@fastify/cookie";
 import type { ProcessMessage } from "./types.js";
 import { ProcessMessagesType } from "./types.js";
@@ -21,8 +20,7 @@ export const refreshTokenCookieOptions: CookieSerializeOptions = {
   maxAge: 60 * 60 * 24 * 2,
   path: `/${env.API_PREFIX}/${env.API_VERSION}/auth`,
   secure: env.ENVIRONMENT === "production",
-  sameSite: "none",
-  // domain: env.API_HOST,
+  sameSite: "lax",
 };
 
 export const REFRESH_TOKEN = "refreshToken";
