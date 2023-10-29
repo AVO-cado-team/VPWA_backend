@@ -77,4 +77,10 @@ export class UserServiceImpl implements UserService {
     if (!user) return new Err(new UserNotFoundError(userId));
     return new Ok(await this.repo.getInvites(userId));
   }
+
+  async getAllChats(userId: UserId) {
+    const user = await this.repo.findByIdWithChats(userId);
+    if (!user) return new Err(new UserNotFoundError(userId));
+    return new Ok(user.chats);
+  }
 }

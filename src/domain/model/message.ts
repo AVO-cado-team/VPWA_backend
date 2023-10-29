@@ -3,7 +3,7 @@ import type { ChatEntity, ChatId } from "./chat.js";
 import type { UserEntity, UserId } from "./user.js";
 import type { MESSAGE_TYPE } from "@prisma/client";
 
-export type { MESSAGE_TYPE } from "@prisma/client";
+export { MESSAGE_TYPE } from "@prisma/client";
 export type MessageId = Opaque<string, "MessageId">;
 export type MessageEntity = {
   id: MessageId;

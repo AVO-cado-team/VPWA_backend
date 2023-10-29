@@ -7,6 +7,7 @@ type NewMessage = {
   messageType: MESSAGE_TYPE;
   chatId: string;
   authorId: string;
+  messageId: string;
 };
 
 type Invite = {

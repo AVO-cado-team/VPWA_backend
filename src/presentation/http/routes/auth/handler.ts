@@ -71,7 +71,7 @@ const logout: FastifyHandler = async (request, reply) => {
   return await reply
     .clearCookie(REFRESH_TOKEN, refreshTokenCookieOptions)
     .code(SC.OK)
-    .send();
+    .send({ message: "Logout successfully" });
 };
 
 export default { tokenRefresh, logout };

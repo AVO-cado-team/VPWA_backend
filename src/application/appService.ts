@@ -10,6 +10,7 @@ import type {
   UserPasswordNotValidError,
 } from "#model/auth.js";
 import type {
+  UserEntity,
   UserId,
   UsernameAlreadyExistsError,
   UserNotFoundError,
@@ -109,6 +110,9 @@ export interface ApplicationService {
       InternalError | UserEmailIncorrectError | UserPasswordIncorrectError
     >
   >;
+  getMe(
+    userId: UserId,
+  ): Promise<Result<UserEntity, UserNotFoundError | InternalError>>;
   // NOTE: ----------- AUTH ----------------
 
   // PERF: ----------- USER ----------------
@@ -195,8 +199,12 @@ export interface ApplicationService {
     message: string,
     messageType: MESSAGE_TYPE,
   ): Promise<
-    Result<void, UserNotFoundError | ChatNotFoundError | ChatActionNotPermitted>
+    Result<
+      MessageEntity,
+      UserNotFoundError | ChatNotFoundError | ChatActionNotPermitted
+    >
   >;
+  getAllChats(userId: UserId): Promise<Result<ChatEntity[], UserNotFoundError>>;
   // HACK: ----------- CHAT ----------------
 
   // FIX: ----------- Real Ttme Communication ----------------

@@ -248,7 +248,8 @@ export class ChatServiceImpl implements ChatService {
     if (userInChat.relation === CHAT_USER_RELATION.KICKED)
       return new Err(new ChatActionNotPermitted(chatId));
 
-    await this.repo.createMessage(chatId, actorId, message, messageType);
-    return new Ok(undefined);
+    return new Ok(
+      await this.repo.createMessage(chatId, actorId, message, messageType),
+    );
   }
 }

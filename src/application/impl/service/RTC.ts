@@ -1,6 +1,6 @@
 import { USER_ONLINE_STATUS, UserNotFoundError } from "#domain/model/user.js";
 import type { RTCSocket } from "#presentation/socket/types.js";
-import type { MESSAGE_TYPE } from "#domain/model/message.js";
+import type { MESSAGE_TYPE, MessageId } from "#domain/model/message.js";
 import type { UserRepo } from "#domain/repo/user.js";
 import type { UserId } from "#domain/model/user.js";
 import type { ChatId } from "#domain/model/chat.js";
@@ -29,6 +29,7 @@ export class RTCServiceImpl implements RTCService {
     chatId: ChatId,
     message: string,
     messageType: MESSAGE_TYPE,
+    messageId: MessageId,
   ) {
     log.info({ authorId, chatId, message, messageType });
     const chatUsers = this.chatToUsers.get(chatId);
@@ -37,7 +38,14 @@ export class RTCServiceImpl implements RTCService {
     for (const userId of chatUsers) {
       const socket = this.userToSocket.get(userId);
       if (!socket) throw new UserNotFoundInMapError(userId);
-      socket.emit("newMessage", { message, messageType, chatId, authorId });
+      // Consider adding Date to message
+      socket.emit("newMessage", {
+        message,
+        messageType,
+        chatId,
+        authorId,
+        messageId,
+      });
     }
   }
   // TODO: Consider situation when user accepts invite. In this case we need to send message to all users in chat about new user. And add this user to chatToUsers map

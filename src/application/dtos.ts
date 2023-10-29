@@ -36,6 +36,7 @@ const DateTime = Type.Transform(Type.String({ format: "datetime" }))
   .Decode((value) => new Date(value))
   .Encode((value) => value.toISOString());
 
+// TODO: Consider adding a "type" field to ChatMessageDTO
 export const ChatMessageDTO = Type.Object({
   id: Type.String(),
   text: Type.String(),
@@ -47,3 +48,15 @@ export type ChatMessageDTO = Static<typeof ChatMessageDTO>;
 
 export const ChatMessagesDTO = Type.Array(ChatMessageDTO);
 export type ChatMessagesDTO = Static<typeof ChatMessagesDTO>;
+
+export const ChatDTO = Type.Object({
+  id: Type.String(),
+  chatname: Type.String(),
+  title: Type.String(),
+  isPrivate: Type.Boolean(),
+  adminId: Type.String(),
+});
+export type ChatDTO = Static<typeof ChatDTO>;
+
+export const ChatsDTO = Type.Array(ChatDTO);
+export type ChatsDTO = Static<typeof ChatsDTO>;

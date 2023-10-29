@@ -1,4 +1,4 @@
-import { GeneralErrorDTO } from "#application/dtos.js";
+import { ChatsDTO, GeneralErrorDTO } from "#application/dtos.js";
 import { Type } from "@sinclair/typebox";
 
 const updateUsernameBody = Type.Object({
@@ -18,4 +18,16 @@ const updateUsername = {
   tags: ["user"],
 };
 
-export default { updateUsername };
+const getChats = {
+  operationId: "getChats",
+  title: "Get chats",
+  description: "Get chats",
+  response: {
+    200: ChatsDTO,
+    "4xx": GeneralErrorDTO,
+    "5xx": GeneralErrorDTO,
+  },
+  tags: ["user"],
+};
+
+export default { updateUsername, getChats };

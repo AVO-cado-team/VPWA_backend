@@ -3,14 +3,14 @@ export type TokenPair = {
   refreshToken: string;
 };
 
-export type AuthResponse = {
-  tokenPair: TokenPair;
-  userData: AccessTokenPayload;
-};
-
 export type AccessTokenPayload = {
   id: string;
   email: string;
+};
+
+export type AuthResponse = {
+  tokenPair: TokenPair;
+  userData: AccessTokenPayload;
 };
 
 export type UserAgent = {

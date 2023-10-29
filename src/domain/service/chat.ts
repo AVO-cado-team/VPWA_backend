@@ -82,6 +82,9 @@ export interface ChatService {
     message: string,
     messageType: MESSAGE_TYPE,
   ): Promise<
-    Result<void, ChatNotFoundError | ChatActionNotPermitted | UserNotFoundError>
+    Result<
+      MessageEntity,
+      ChatNotFoundError | ChatActionNotPermitted | UserNotFoundError
+    >
   >;
 }

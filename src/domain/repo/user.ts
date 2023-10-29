@@ -1,5 +1,5 @@
-import type { UserId, UserEntity, UserEntityWithChats } from "#model/user.js";
-import { InviteEntity } from "#domain/model/invite.js";
+import type { UserEntity, UserEntityWithChats, UserId } from "#model/user.js";
+import type { InviteEntity } from "#domain/model/invite.js";
 
 export interface UserRepo {
   create(userId: UserId, username: string): Promise<UserEntity>;

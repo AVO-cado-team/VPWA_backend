@@ -1,11 +1,11 @@
-import {
+import type {
   CHAT_USER_RELATION,
   ChatEntity,
   ChatEntityWithUsers,
   ChatId,
 } from "#domain/model/chat.js";
-import { MESSAGE_TYPE, MessageEntity } from "#domain/model/message.js";
-import { UserId } from "#domain/model/user.js";
+import type { MESSAGE_TYPE, MessageEntity } from "#domain/model/message.js";
+import type { UserId } from "#domain/model/user.js";
 
 export interface ChatRepo {
   create(

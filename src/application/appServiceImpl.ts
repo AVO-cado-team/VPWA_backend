@@ -180,6 +180,12 @@ export class Application implements ApplicationService {
     });
   }
 
+  async getMe(userId: UserId) {
+    const user = await this.userService.repo.findById(userId);
+    if (!user) return new Err(new UserNotFoundError(userId));
+    return new Ok(user);
+  }
+
   async isUsernameExists(username: string) {
     return await this.userService.repo.checkIfUsernameExists(username);
   }
@@ -252,6 +258,10 @@ export class Application implements ApplicationService {
     return await this.chatService.kickUser(kickerId, chatId, kickedId);
   }
 
+  async getAllChats(userId: UserId) {
+    return await this.userService.getAllChats(userId);
+  }
+
   async getUserInvites(userId: UserId) {
     return await this.userService.getInvites(userId);
   }
@@ -272,13 +282,22 @@ export class Application implements ApplicationService {
     messageType: MESSAGE_TYPE,
   ) {
     // TODO: Consider situation when users sends malitios messages to the chat he is not in.
-    this.rtcService.sendMessage(authorId, chatId, message, messageType);
-    return await this.chatService.sendMessage(
+    const msgResult = await this.chatService.sendMessage(
       authorId,
       chatId,
       message,
       messageType,
     );
+    if (msgResult.isErr()) return msgResult;
+    this.rtcService.sendMessage(
+      authorId,
+      chatId,
+      message,
+      messageType,
+      msgResult.value.id,
+    );
+
+    return msgResult;
   }
 
   async connectUser(accessToken: string, socket: RTCSocket) {

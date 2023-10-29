@@ -8,6 +8,12 @@ const AuthResponse = Type.Object({
   accessToken: Type.String(),
 });
 
+const MeInfo = Type.Object({
+  id: Type.String(),
+  email: Type.String(),
+  username: Type.String(),
+});
+
 const RegisterRequest = Type.Object({
   email: Type.String({ format: "email" }),
   password: Type.String({ minLength: 6 }),
@@ -102,6 +108,18 @@ const login = {
   tags: ["auth"],
 };
 
+const getMe = {
+  operationId: "getMe",
+  title: "Get Me",
+  description: "Get current user",
+  response: {
+    200: MeInfo,
+    "4xx": GeneralErrorDTO,
+    "5xx": GeneralErrorDTO,
+  },
+  tags: ["auth"],
+};
+
 export default {
   googleOpenID,
   register,
@@ -109,4 +127,5 @@ export default {
   tokenRefresh,
   logout,
   login,
+  getMe,
 };

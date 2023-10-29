@@ -1,14 +1,15 @@
 import type { USER_ONLINE_STATUS, UserId } from "#domain/model/user.js";
-import type { MESSAGE_TYPE } from "#domain/model/message.js";
+import type { MESSAGE_TYPE, MessageId } from "#domain/model/message.js";
 import type { ChatId } from "#domain/model/chat.js";
 import type { Socket } from "socket.io";
 
 export interface RTCService {
   sendMessage(
-    userId: string,
+    userId: UserId,
     chatId: ChatId,
     message: string,
     messageType: MESSAGE_TYPE,
+    messageId: MessageId,
   ): void;
   sendInvite(inviter: UserId, invitee: UserId, chatName: string): void;
   updateUserStatus(

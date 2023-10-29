@@ -9,6 +9,10 @@ import schema from "./schema.js";
 
 const userRoutes: FastifyPluginAsync = async (fastify) => {
   const fastifyT = fastify.withTypeProvider<TypeBoxTypeProvider>();
+  fastifyT.addHook("onRequest", async (request, reply) => {
+    await fastifyT.authenticate(request, reply);
+  });
+
   fastifyT.patch(
     "/username",
     { schema: schema.updateUsername },
@@ -32,6 +36,24 @@ const userRoutes: FastifyPluginAsync = async (fastify) => {
       }
 
       return reply.code(SC.OK).send({ message: "Username updated" });
+    },
+  );
+  fastifyT.get(
+    "/chats",
+    { schema: schema.getChats },
+    async (request, reply) => {
+      if (!request.user) throw new Error("User is not authenticated");
+      const result = await application.getAllChats(
+        create<UserId>(request.user.id),
+      );
+      // TODO: check if all errors handled
+      if (result.isErr()) {
+        return reply
+          .code(SC.INTERNAL_SERVER_ERROR)
+          .send({ message: result.error.message });
+      }
+
+      return reply.code(SC.OK).send(result.value);
     },
   );
 };

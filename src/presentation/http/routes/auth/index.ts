@@ -12,11 +12,33 @@ import application from "#presentation/context.js";
 import type { FastifyPluginAsync } from "fastify";
 import handler from "./handler.js";
 import schema from "./schema.js";
+import type { UserId } from "#domain/model/user.js";
 import { UsernameAlreadyExistsError } from "#domain/model/user.js";
 import { InternalError } from "#domain/error.js";
+import { create } from "ts-opaque";
 
 const authRoutes: FastifyPluginAsync = async (fastify) => {
   const fastifyT = fastify.withTypeProvider<TypeBoxTypeProvider>();
+
+  await fastifyT.register(async (fastifyScope) => {
+    const fastifyT = fastifyScope.withTypeProvider<TypeBoxTypeProvider>();
+    fastifyT.addHook("onRequest", async (request, reply) => {
+      await fastifyT.authenticate(request, reply);
+    });
+    fastifyT.get("/me", { schema: schema.getMe }, async (request, reply) => {
+      if (!request.user) throw new Error("User is not authenticated");
+      const meResult = await application.getMe(create<UserId>(request.user.id));
+      if (meResult.isErr()) {
+        return await reply.code(SC.UNAUTHORIZED).send(meResult.error);
+      }
+
+      return await reply.code(SC.OK).send({
+        email: request.user.email,
+        ...meResult.value,
+      });
+    });
+  });
+
   fastifyT.get("/token/logout", {
     handler: handler.logout,
     schema: schema.logout,
@@ -51,6 +73,7 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
             .send({ message: authResult.error.message });
         } else if (authResult.error instanceof InternalError) {
           return await reply
+            .clearCookie(REFRESH_TOKEN, refreshTokenCookieOptions)
             .code(SC.INTERNAL_SERVER_ERROR)
             .send({ message: authResult.error.message });
         } else {
@@ -197,10 +220,12 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
           result.error instanceof UserPasswordNotValidError
         ) {
           return await reply
+            .clearCookie(REFRESH_TOKEN, refreshTokenCookieOptions)
             .code(SC.BAD_REQUEST)
             .send({ message: result.error.message });
         } else if (result.error instanceof InternalError) {
           return await reply
+            .clearCookie(REFRESH_TOKEN, refreshTokenCookieOptions)
             .code(SC.INTERNAL_SERVER_ERROR)
             .send({ message: result.error.message });
         } else {
@@ -222,7 +247,7 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
   fastifyT.patch("/login", { schema: schema.login }, async (request, reply) => {
     const { email, password } = request.body;
     const userDevice: UserDeviceDTO = {
-      ip: request.ip ?? "",
+      ip: request.ip,
       os: request.userAgent?.os.toString() ?? "",
       browser: request.userAgent?.toString() ?? "",
       fingerprint: "",

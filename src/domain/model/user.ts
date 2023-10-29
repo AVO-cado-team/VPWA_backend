@@ -7,6 +7,12 @@ export type UserEntity = {
   username: string;
 };
 
+export type UserInfo = {
+  id: UserId;
+  username: string;
+  email: string;
+};
+
 export const enum USER_ONLINE_STATUS {
   ONLINE = "ONLINE",
   OFFLINE = "OFFLINE",
