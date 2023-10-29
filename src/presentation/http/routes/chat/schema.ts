@@ -1,4 +1,4 @@
-import { ChatMessagesDTO, GeneralErrorDTO } from "#application/dtos.js";
+import { ChatMessagesDTO, GeneralErrorDTO, Id } from "#application/dtos.js";
 import type { Static } from "@sinclair/typebox";
 import { Type } from "@sinclair/typebox";
 
@@ -24,7 +24,7 @@ const createChat = {
 };
 
 const IdRequest = Type.Object({
-  id: Type.String(),
+  id: Id,
 });
 export type IdRequest = Static<typeof IdRequest>;
 
@@ -39,22 +39,22 @@ const UsernameRequest = Type.Object({
 export type UsernameRequest = Static<typeof UsernameRequest>;
 
 const InviteUserByIdRequest = Type.Object({
-  userId: Type.String(),
-  chatId: Type.String(),
+  userId: Id,
+  chatId: Id,
 });
 export type InviteUserByIdRequest = Static<typeof InviteUserByIdRequest>;
 
 const InviteUserByUsernameRequest = Type.Object({
   username: Type.String(),
-  chatId: Type.String(),
+  chatId: Id,
 });
 export type InviteUserByUsernameRequest = Static<
   typeof InviteUserByUsernameRequest
 >;
 
 const InviteActionRequest = Type.Object({
-  chatId: Type.String(),
-  userId: Type.String(),
+  chatId: Id,
+  userId: Id,
 });
 
 const deleteChatById = {
@@ -140,7 +140,7 @@ const getMessagesById = {
   title: "Get messages",
   description: "Get messages",
   params: Type.Object({
-    chatId: Type.String(),
+    chatId: Id,
   }),
   querystring: Type.Object({
     limit: Type.Number(),

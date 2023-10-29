@@ -1,13 +1,13 @@
-import { ChatMessageDTO, GeneralErrorDTO } from "#application/dtos.js";
+import { ChatMessageDTO, GeneralErrorDTO, Id } from "#application/dtos.js";
 import { Type } from "@sinclair/typebox";
 
 const DateTime = Type.Transform(Type.String({ format: "datetime" }))
   .Decode((value) => new Date(value))
   .Encode((value) => value.toISOString());
 
-export const ChatMessageBody = Type.Object({
+const ChatMessageBody = Type.Object({
   text: Type.String(),
-  chatId: Type.String(),
+  chatId: Id,
 });
 
 const sendMessage = {

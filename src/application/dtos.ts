@@ -1,13 +1,18 @@
 import type { Static } from "@sinclair/typebox";
 import { Type } from "@sinclair/typebox";
 
+export const Id = Type.String({
+  format: "uuid",
+});
+export type Id = Static<typeof Id>;
+
 export const GeneralErrorDTO = Type.Object({
   message: Type.String(),
 });
 export type GeneralErrorDTO = Static<typeof GeneralErrorDTO>;
 
 export const AccessTokenPayloadDTO = Type.Object({
-  id: Type.String(),
+  id: Id,
   email: Type.String(),
 });
 export type AccessTokenPayloadDTO = Static<typeof AccessTokenPayloadDTO>;
@@ -38,11 +43,11 @@ const DateTime = Type.Transform(Type.String({ format: "datetime" }))
 
 // TODO: Consider adding a "type" field to ChatMessageDTO
 export const ChatMessageDTO = Type.Object({
-  id: Type.String(),
+  id: Id,
   text: Type.String(),
   date: DateTime,
-  userId: Type.String(),
-  chatId: Type.String(),
+  userId: Id,
+  chatId: Id,
 });
 export type ChatMessageDTO = Static<typeof ChatMessageDTO>;
 
@@ -50,11 +55,11 @@ export const ChatMessagesDTO = Type.Array(ChatMessageDTO);
 export type ChatMessagesDTO = Static<typeof ChatMessagesDTO>;
 
 export const ChatDTO = Type.Object({
-  id: Type.String(),
+  id: Id,
   chatname: Type.String(),
   title: Type.String(),
   isPrivate: Type.Boolean(),
-  adminId: Type.String(),
+  adminId: Id,
 });
 export type ChatDTO = Static<typeof ChatDTO>;
 
