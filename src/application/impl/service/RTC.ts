@@ -29,9 +29,9 @@ export class RTCServiceImpl implements RTCService {
     chatId: ChatId,
     message: string,
     messageType: MESSAGE_TYPE,
-    messageId: MessageId,
+    id: MessageId,
+    date: Date,
   ) {
-    log.info({ authorId, chatId, message, messageType });
     const chatUsers = this.chatToUsers.get(chatId);
     if (!chatUsers) throw new ChatNotFoundInMapError(chatId);
     // Send message to all users in chat
@@ -40,11 +40,12 @@ export class RTCServiceImpl implements RTCService {
       if (!socket) throw new UserNotFoundInMapError(userId);
       // Consider adding Date to message
       socket.emit("newMessage", {
-        message,
+        text: message,
         messageType,
         chatId,
-        authorId,
-        messageId,
+        userId: authorId,
+        id,
+        date,
       });
     }
   }
@@ -55,6 +56,11 @@ export class RTCServiceImpl implements RTCService {
     if (!socket) throw new UserNotFoundInMapError(invitee);
     socket.emit("invite", { inviter, chatId });
   }
+  // async initUsersStatus(
+  //   userId: UserId,
+  //   status: USER_ONLINE_STATUS,
+  //   socket: RTCSocket,
+  // ) {}
   async updateUserStatus(
     userId: UserId,
     status: USER_ONLINE_STATUS,

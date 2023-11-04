@@ -9,7 +9,8 @@ export interface RTCService {
     chatId: ChatId,
     message: string,
     messageType: MESSAGE_TYPE,
-    messageId: MessageId,
+    id: MessageId,
+    date: Date,
   ): void;
   sendInvite(inviter: UserId, invitee: UserId, chatName: string): void;
   updateUserStatus(

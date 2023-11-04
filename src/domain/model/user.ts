@@ -24,14 +24,14 @@ export type UserEntityWithChats = UserEntity & {
 };
 
 export class UserNotFoundError extends Error {
-  userNotFound: true = true;
+  userNotFound = true as const;
   constructor(name: string) {
     super("User not found: " + name);
   }
 }
 
 export class UsernameAlreadyExistsError extends Error {
-  usernameAlreadyExists: true = true;
+  usernameAlreadyExists = true as const;
   constructor(username: string) {
     super("User with Username already exists: " + username);
   }

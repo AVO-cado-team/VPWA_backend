@@ -29,37 +29,31 @@ export type UserDevice = {
 };
 
 export class GoogleAuthError extends Error {
-  googleAuthError: true = true;
-  constructor(message: string) {
-    super(message);
-  }
+  googleAuthError = true as const;
 }
 
 // TODO: export type TokenType = "Access" | "Refresh";
 
 export class TokenInvalidError extends Error {
-  tokenInvalidError: true = true;
+  tokenInvalidError = true as const;
   constructor(message: string) {
     super("You token is invalid. " + message);
   }
 }
 
 export class AuthMicroServiceError extends Error {
-  authMicroServiceError: true = true;
-  constructor(message?: string) {
-    super(message);
-  }
+  authMicroServiceError = true as const;
 }
 
 export class EmailIsNotVerifiedError extends Error {
-  emailIsNotVerifiedError: true = true;
+  emailIsNotVerifiedError = true as const;
   constructor() {
     super("Your email is not verified.");
   }
 }
 
 export class UnknownErrorTypeError extends Error {
-  unknownErrorType: true = true;
+  unknownErrorType = true as const;
   constructor(microserviceName: string, procedureName: string) {
     super(
       microserviceName +
@@ -70,42 +64,36 @@ export class UnknownErrorTypeError extends Error {
 }
 
 export class InvalidCredentialsError extends Error {
-  invalidCredentialsError: true = true;
-  constructor(message: string) {
-    super(message);
-  }
+  invalidCredentialsError = true as const;
 }
 
 export class EmailDoesNotExistError extends InvalidCredentialsError {
-  emailDosNotExistError: true = true;
+  emailDosNotExistError = true as const;
   constructor() {
     super("User does not exist");
   }
 }
 
 export class UserPasswordIncorrectError extends InvalidCredentialsError {
-  userPasswordIncorrectError: true = true;
+  userPasswordIncorrectError = true as const;
   constructor() {
     super("Password is incorrect");
   }
 }
 
 export class UserEmailIncorrectError extends Error {
-  userEmailIncorrectError: true = true;
+  userEmailIncorrectError = true as const;
   constructor(reason: string) {
     super("Email is not valid. " + reason);
   }
 }
 
 export class UserPasswordNotValidError extends Error {
-  passwordNotValid: true = true;
-  constructor(message: string) {
-    super(message);
-  }
+  passwordNotValid = true as const;
 }
 
 export class UserAlreadyExistsError extends Error {
-  userAlreadyExistsError: true = true;
+  userAlreadyExistsError = true as const;
   constructor() {
     super("User already exists with this email");
   }

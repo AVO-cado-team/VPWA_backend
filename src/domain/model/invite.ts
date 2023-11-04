@@ -1,5 +1,5 @@
-import { ChatEntity } from "./chat.js";
-import { UserId } from "./user.js";
+import type { ChatEntity } from "./chat.js";
+import type { UserId } from "./user.js";
 
 export type InviteEntity = {
   userId: UserId;
@@ -8,7 +8,7 @@ export type InviteEntity = {
 };
 
 export class InviteNotFoundError extends Error {
-  inviteNotFoundError: true = true;
+  inviteNotFoundError = true as const;
   constructor(chatId: string, userId: string) {
     super("Invite not found. Chat: " + chatId + " Uset: " + userId);
   }

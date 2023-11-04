@@ -1,4 +1,4 @@
-import { CHAT_USER_RELATION } from "@prisma/client";
+import type { CHAT_USER_RELATION } from "@prisma/client";
 import type { MessageEntity } from "./message.js";
 import type { UserEntity } from "./user.js";
 import type { Opaque } from "ts-opaque";
@@ -37,21 +37,21 @@ export type ChatEntityWithUsersAndMessages = ChatEntity & {
 };
 
 export class ChatNameAlreadyExistsError extends Error {
-  chatNameAlreadyExistsError: true = true;
+  chatNameAlreadyExistsError = true as const;
   constructor(chatName: string) {
     super(`Chat name ${chatName} already exists.`);
   }
 }
 
 export class ChatNotFoundError extends Error {
-  chatNotFoundError: true = true;
+  chatNotFoundError = true as const;
   constructor(chat: string) {
     super("Chat not found. " + chat);
   }
 }
 
 export class ChatActionNotPermitted extends Error {
-  chatActionNotPermitted: true = true;
+  chatActionNotPermitted = true as const;
   constructor(chat: string, explanation?: string) {
     super("Chat action not permitted. " + chat + " " + explanation);
   }
