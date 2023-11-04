@@ -1,5 +1,7 @@
+import { CHAT_USER_RELATION } from "#domain/model/chat.js";
 import type { Static } from "@sinclair/typebox";
 import { Type } from "@sinclair/typebox";
+import { MESSAGE_TYPE } from "@prisma/client";
 
 export const Id = Type.String({
   format: "uuid",
@@ -48,6 +50,7 @@ export const ChatMessageDTO = Type.Object({
   date: DateTime,
   userId: Id,
   chatId: Id,
+  messageType: Type.Enum({ ...MESSAGE_TYPE }),
 });
 export type ChatMessageDTO = Static<typeof ChatMessageDTO>;
 
@@ -65,3 +68,42 @@ export type ChatDTO = Static<typeof ChatDTO>;
 
 export const ChatsDTO = Type.Array(ChatDTO);
 export type ChatsDTO = Static<typeof ChatsDTO>;
+
+export const UserDTO = Type.Object({
+  id: Id,
+  username: Type.String(),
+});
+export type UserDTO = Static<typeof UserDTO>;
+
+export const UserInChatDTO = Type.Object({
+  id: Id,
+  username: Type.String(),
+  relation: Type.Enum({ ...CHAT_USER_RELATION }),
+});
+export type UserInChatDTO = Static<typeof UserInChatDTO>;
+
+export const ChatWithMwssagesUsersDTO = Type.Object({
+  id: Id,
+  chatname: Type.String(),
+  title: Type.String(),
+  isPrivate: Type.Boolean(),
+  adminId: Id,
+  messages: ChatMessagesDTO,
+  users: Type.Array(UserInChatDTO),
+});
+export type ChatWithMwssagesUsersDTO = Static<typeof ChatWithMwssagesUsersDTO>;
+
+export const ChatsWithMwssagesUsersDTO = Type.Array(ChatWithMwssagesUsersDTO);
+export type ChatsWithMwssagesUsersDTO = Static<
+  typeof ChatsWithMwssagesUsersDTO
+>;
+
+export const InviteDTO = Type.Object({
+  userId: Id,
+  chat: ChatDTO,
+  createdAt: DateTime,
+});
+export type InviteDTO = Static<typeof InviteDTO>;
+
+export const InvitesDTO = Type.Array(InviteDTO);
+export type InvitesDTO = Static<typeof InvitesDTO>;

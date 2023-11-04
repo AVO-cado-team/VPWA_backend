@@ -1,4 +1,7 @@
-import { ChatsDTO, GeneralErrorDTO } from "#application/dtos.js";
+import {
+  ChatsWithMwssagesUsersDTO,
+  GeneralErrorDTO,
+} from "#application/dtos.js";
 import { Type } from "@sinclair/typebox";
 
 const updateUsernameBody = Type.Object({
@@ -22,8 +25,12 @@ const getChats = {
   operationId: "getChats",
   title: "Get chats",
   description: "Get chats",
+  querystring: Type.Object({
+    limit: Type.String(),
+    offset: Type.String(),
+  }),
   response: {
-    200: ChatsDTO,
+    200: ChatsWithMwssagesUsersDTO,
     "4xx": GeneralErrorDTO,
     "5xx": GeneralErrorDTO,
   },

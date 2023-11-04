@@ -1,16 +1,16 @@
+import type { MESSAGE_TYPE, MessageEntity } from "#domain/model/message.js";
+import type { UserId, UserNotFoundError } from "#domain/model/user.js";
+import type { InviteNotFoundError } from "#domain/model/invite.js";
+import type { ChatRepo } from "#domain/repo/chat.js";
+import type { Result } from "ts-results-es";
 import type {
   ChatActionNotPermitted,
   ChatEntity,
+  ChatEntityWithUsersAndMessages,
   ChatId,
   ChatNameAlreadyExistsError,
   ChatNotFoundError,
 } from "#domain/model/chat.js";
-import type { InviteNotFoundError } from "#domain/model/invite.js";
-import { InviteEntity } from "#domain/model/invite.js";
-import type { MESSAGE_TYPE, MessageEntity } from "#domain/model/message.js";
-import type { UserId, UserNotFoundError } from "#domain/model/user.js";
-import type { ChatRepo } from "#domain/repo/chat.js";
-import type { Result } from "ts-results-es";
 
 export interface ChatService {
   repo: ChatRepo;
@@ -20,6 +20,17 @@ export interface ChatService {
     isPrivate: boolean,
     title: string,
   ): Promise<Result<ChatEntity, ChatNameAlreadyExistsError>>;
+  joinOrCreate(
+    userId: UserId,
+    chatname: string,
+    isPrivate: boolean,
+    title: string,
+  ): Promise<
+    Result<
+      ChatEntityWithUsersAndMessages,
+      ChatNameAlreadyExistsError | ChatActionNotPermitted
+    >
+  >;
   deleteById(
     userId: UserId,
     chatId: ChatId,

@@ -1,5 +1,7 @@
 import type { TypeBoxTypeProvider } from "@fastify/type-provider-typebox";
+import { ChatNotFoundError } from "#domain/model/chat.js";
 import { UserNotFoundError } from "#domain/model/user.js";
+import { MESSAGE_TYPE } from "#domain/model/message.js";
 import { StatusCodes as SC } from "http-status-codes";
 import type { UserId } from "#domain/model/user.js";
 import type { ChatId } from "#domain/model/chat.js";
@@ -7,8 +9,6 @@ import application from "#presentation/context.js";
 import type { FastifyPluginAsync } from "fastify";
 import schema from "./schema.js";
 import { create } from "ts-opaque";
-import { ChatNotFoundError } from "#domain/model/chat.js";
-import { MESSAGE_TYPE } from "#domain/model/message.js";
 
 const messageRoutes: FastifyPluginAsync = async (fastify) => {
   const fastifyT = fastify.withTypeProvider<TypeBoxTypeProvider>();
@@ -27,12 +27,18 @@ const messageRoutes: FastifyPluginAsync = async (fastify) => {
 
     if (result.isErr()) {
       if (result.error instanceof ChatNotFoundError) {
-        return await reply.status(SC.NOT_FOUND);
+        return await reply.status(SC.NOT_FOUND).send({
+          message: result.error.message,
+        });
       }
       if (result.error instanceof UserNotFoundError) {
-        return await reply.status(SC.NOT_FOUND);
+        return await reply.status(SC.NOT_FOUND).send({
+          message: result.error.message,
+        });
       }
-      return await reply.status(SC.INTERNAL_SERVER_ERROR);
+      return await reply
+        .status(SC.INTERNAL_SERVER_ERROR)
+        .send({ message: "Internal server error" });
     }
 
     return await reply.status(SC.OK).send({

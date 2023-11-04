@@ -20,7 +20,7 @@ const createWorker = () => {
 };
 
 const run = () => {
-  console.warn("Start app");
+  console.warn("Start primary process in cluster");
   createWorker();
   eventEmitter.on("restarted", () => {
     createWorker();

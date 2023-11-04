@@ -1,4 +1,11 @@
-import { ChatMessagesDTO, GeneralErrorDTO, Id } from "#application/dtos.js";
+import {
+  ChatMessagesDTO,
+  ChatWithMwssagesUsersDTO,
+  GeneralErrorDTO,
+  Id,
+  InviteDTO,
+  InvitesDTO,
+} from "#application/dtos.js";
 import type { Static } from "@sinclair/typebox";
 import { Type } from "@sinclair/typebox";
 
@@ -10,13 +17,16 @@ const CreateChatRequest = Type.Object({
 
 export type CreateChatRequestType = Static<typeof CreateChatRequest>;
 
-const createChat = {
-  operationId: "createChat",
-  title: "Create chat",
+const joinOrCreate = {
+  operationId: "joinOrCreateChat",
+  title:
+    "Create new chat if not exists or join existing public chat. If chat already exists and is private, then forbidden",
   description: "Create chat",
   body: CreateChatRequest,
   response: {
-    200: { type: "null" },
+    200: ChatWithMwssagesUsersDTO,
+    400: GeneralErrorDTO,
+    403: GeneralErrorDTO,
     "4xx": { GeneralErrorDTO },
     "5xx": { GeneralErrorDTO },
   },
@@ -135,6 +145,18 @@ const declineInvite = {
   tags: ["chat", "invite"],
 };
 
+const getInvites = {
+  operationId: "getInvites",
+  title: "Get invites",
+  description: "Get invites",
+  response: {
+    200: InvitesDTO,
+    "4xx": GeneralErrorDTO,
+    "5xx": GeneralErrorDTO,
+  },
+  tags: ["chat", "invite"],
+};
+
 const getMessagesById = {
   operationId: "getMessagesById",
   title: "Get messages",
@@ -143,8 +165,8 @@ const getMessagesById = {
     chatId: Id,
   }),
   querystring: Type.Object({
-    limit: Type.Number(),
-    offset: Type.Number(),
+    limit: Type.String(),
+    offset: Type.String(),
   }),
   response: {
     200: ChatMessagesDTO,
@@ -156,11 +178,12 @@ const getMessagesById = {
 
 export default {
   inviteUserByUsername,
-  createChat,
+  joinOrCreate,
   deleteChatById,
   inviteUserById,
   deleteChatByChatname,
   acceptInvite,
   declineInvite,
+  getInvites,
   getMessagesById,
 };

@@ -44,6 +44,7 @@ export const chatRepo: ChatRepo = {
         id: create<UserId>(user.user.id),
         relation: user.relation,
       })),
+      messages: [],
     };
   },
   async checkIfChatnameExists(chatname) {
@@ -139,7 +140,7 @@ export const chatRepo: ChatRepo = {
       adminId: create<UserId>(chat.adminId),
     };
   },
-  async addUser(chatId, userId) {
+  async addUserByChatId(chatId, userId) {
     const userOnChats = await prisma.userOnChats.create({
       data: {
         chatId,
@@ -157,6 +158,40 @@ export const chatRepo: ChatRepo = {
         ...user,
         id: create<UserId>(user.userId),
         username: user.user.username,
+      })),
+    };
+  },
+  async addUserByChatname(chatname, userId) {
+    const userOnChats = await prisma.userOnChats.create({
+      data: {
+        chat: { connect: { chatname } },
+        user: { connect: { id: userId } },
+        relation: CHAT_USER_RELATION.USER,
+      },
+      include: {
+        chat: {
+          include: {
+            users: { include: { user: true } },
+            messages: { take: 50, skip: 0, orderBy: { date: "asc" } },
+          },
+        },
+      },
+    });
+    log.info(userOnChats, "Add user to chat. User: " + userId);
+
+    return {
+      ...userOnChats.chat,
+      id: create<ChatId>(userOnChats.chatId),
+      users: userOnChats.chat.users.map((user) => ({
+        ...user,
+        id: create<UserId>(user.userId),
+        username: user.user.username,
+      })),
+      messages: userOnChats.chat.messages.map((message) => ({
+        ...message,
+        id: create<MessageId>(message.id),
+        chatId: create<ChatId>(message.chatId),
+        userId: create<UserId>(message.userId),
       })),
     };
   },
@@ -288,14 +323,6 @@ export const chatRepo: ChatRepo = {
         messageType,
       },
     });
-    log.info(
-      "Create message. Chat: " +
-        chatId +
-        " User: " +
-        userId +
-        " Message: " +
-        message,
-    );
 
     return {
       ...messageEntity,
@@ -303,5 +330,45 @@ export const chatRepo: ChatRepo = {
       chatId: create<ChatId>(messageEntity.chatId),
       userId: create<UserId>(messageEntity.userId),
     };
+  },
+
+  async findByUserIdWithMessageUsers(userId, limit, offset) {
+    const chats = await prisma.userOnChats.findMany({
+      where: { user: { id: userId } },
+      include: {
+        chat: {
+          include: {
+            users: {
+              where: { relation: { not: CHAT_USER_RELATION.KICKED } },
+              include: { user: true },
+            },
+            messages: {
+              take: limit,
+              skip: offset,
+              orderBy: { date: "desc" },
+            },
+          },
+        },
+      },
+    });
+
+    return chats.map((chat) => ({
+      chatname: chat.chat.chatname,
+      adminId: create<UserId>(chat.chat.adminId),
+      isPrivate: chat.chat.isPrivate,
+      title: chat.chat.title,
+      id: create<ChatId>(chat.chatId),
+      messages: chat.chat.messages.map((message) => ({
+        ...message,
+        id: create<MessageId>(message.id),
+        chatId: create<ChatId>(message.chatId),
+        userId: create<UserId>(message.userId),
+      })),
+      users: chat.chat.users.map((user) => ({
+        ...user,
+        id: create<UserId>(user.userId),
+        username: user.user.username,
+      })),
+    }));
   },
 };

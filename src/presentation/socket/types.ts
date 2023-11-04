@@ -3,11 +3,12 @@ import type { MESSAGE_TYPE } from "#domain/model/message.js";
 import type { Server, Socket } from "socket.io";
 
 type NewMessage = {
-  message: string;
+  id: string;
+  text: string;
   messageType: MESSAGE_TYPE;
   chatId: string;
-  authorId: string;
-  messageId: string;
+  userId: string;
+  date: Date;
 };
 
 type Invite = {
@@ -38,6 +39,8 @@ interface RTCServerToClientEvents {
   chatsToUsersStatus: (msg: ChatToUsersStatus) => void;
   invite: (msg: Invite) => void;
   userStatusUpdate: (msg: UserStatusUpdate) => void;
+  initUsersStatus: (msg: UserStatusUpdate[]) => void;
+  // TODO: Add init online status for user. Send all users
 }
 
 interface RTCInterServerEvents {

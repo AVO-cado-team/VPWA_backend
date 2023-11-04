@@ -28,7 +28,7 @@ import type { AuthService } from "#service/auth.js";
 import type { UserService } from "#service/user.js";
 import type {
   ChatActionNotPermitted,
-  ChatEntity,
+  ChatEntityWithUsersAndMessages,
   ChatId,
   ChatNameAlreadyExistsError,
   ChatNotFoundError,
@@ -124,13 +124,16 @@ export interface ApplicationService {
   // PERF: ----------- USER ----------------
 
   // HACK: ----------- CHAT ----------------
-  createChat(
+  joinOrCreateChat(
     userId: UserId,
     chatname: string,
     isPrivate: boolean,
     title: string,
   ): Promise<
-    Result<ChatEntity, ChatNameAlreadyExistsError | UserNotFoundError>
+    Result<
+      ChatEntityWithUsersAndMessages,
+      ChatNameAlreadyExistsError | UserNotFoundError | ChatActionNotPermitted
+    >
   >; // +
   deleteChatById(
     userId: UserId,
@@ -204,7 +207,11 @@ export interface ApplicationService {
       UserNotFoundError | ChatNotFoundError | ChatActionNotPermitted
     >
   >;
-  getAllChats(userId: UserId): Promise<Result<ChatEntity[], UserNotFoundError>>;
+  getAllChats(
+    userId: UserId,
+    limit: number,
+    offset: number,
+  ): Promise<Result<ChatEntityWithUsersAndMessages[], UserNotFoundError>>;
   // HACK: ----------- CHAT ----------------
 
   // FIX: ----------- Real Ttme Communication ----------------

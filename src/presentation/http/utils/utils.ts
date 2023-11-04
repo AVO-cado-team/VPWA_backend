@@ -31,6 +31,32 @@ const filterNonEnglishCharacters = (string_: string): string =>
 export const sanitizeString = (string_: string): string =>
   filterNonEnglishCharacters(string_).replaceAll(/\W/g, "").toLowerCase();
 
+type toStr<T> = (input: T) => T extends Date ? string : T;
+type toStrRecursive<T> = { [K in keyof T]: toStr<T[K]> };
+// export const dateToString: toStrRecursive = (input) => {
+//   type Value = T[keyof T];
+//
+//   function transform(value: Value): Value {
+//     if (value instanceof Date) {
+//       return value.toISOString(); // Convert Date to ISO string
+//     } else if (typeof value === "object" && value !== null) {
+//       // Recursively transform objects
+//       for (const key in value) {
+//         value[key] = transform(value[key]);
+//       }
+//     }
+//     return value;
+//   }
+//
+//   const result: T = { ...input }; // Create a shallow copy
+//
+//   for (const key in result) {
+//     result[key] = transform(result[key]);
+//   }
+//
+//   return result;
+// };
+//
 export const gracefulShutdownHandler = async (
   server: FastifyInstance,
   reason: string,
@@ -57,3 +83,10 @@ export const gracefulShutdownHandler = async (
     process.exit(1);
   }
 };
+
+export class UserNotAuthenticatedError extends Error {
+  userNotAuthenticatedError = true as const;
+  constructor() {
+    super("User is not authenticated in this request");
+  }
+}

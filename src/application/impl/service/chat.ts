@@ -30,6 +30,28 @@ export class ChatServiceImpl implements ChatService {
     return new Ok(chat);
   }
 
+  async joinOrCreate(
+    userId: UserId,
+    chatname: string,
+    isPrivate: boolean,
+    title: string,
+  ) {
+    const chat = await this.repo.findByChatname(chatname);
+    if (chat) {
+      if (chat.isPrivate)
+        return new Err(
+          new ChatActionNotPermitted(
+            "Chat with this chatname already created as private. Admin should join you.",
+          ),
+        );
+
+      return new Ok(await this.repo.addUserByChatname(chatname, userId));
+    }
+
+    // NOTE: Possible race condition if someone creates chat with same name before this line
+    return new Ok(await this.repo.create(userId, chatname, isPrivate, title));
+  }
+
   async deleteById(userId: UserId, chatId: ChatId) {
     const chat = await this.repo.findById(chatId);
     if (!chat) return new Err(new ChatNotFoundError(chatId));
@@ -53,11 +75,11 @@ export class ChatServiceImpl implements ChatService {
     if (!chat) return new Err(new ChatNotFoundError(chatId));
 
     if (actorId === chat.adminId) {
-      return new Ok(await this.repo.addUser(chatId, userId));
+      return new Ok(await this.repo.addUserByChatId(chatId, userId));
     }
 
     if (actorId === userId) {
-      return new Ok(await this.repo.addUser(chatId, userId));
+      return new Ok(await this.repo.addUserByChatId(chatId, userId));
     }
 
     return new Err(new ChatActionNotPermitted(chat.chatname));

@@ -1,6 +1,7 @@
 import type {
   CHAT_USER_RELATION,
   ChatEntity,
+  ChatEntityWithUsersAndMessages as ChatEntityWithUserMessage,
   ChatEntityWithUsers,
   ChatId,
 } from "#domain/model/chat.js";
@@ -13,13 +14,18 @@ export interface ChatRepo {
     chatname: string,
     isPrivate: boolean,
     title: string,
-  ): Promise<ChatEntityWithUsers>;
+  ): Promise<ChatEntityWithUserMessage>;
   deleteById(chatId: ChatId): Promise<void>;
   deleteByName(chatname: string): Promise<void>;
   checkIfChatnameExists(chatname: string): Promise<boolean>;
   findById(chatId: ChatId): Promise<ChatEntity | null>;
   findByIdWithUsers(chatId: ChatId): Promise<ChatEntityWithUsers | null>;
   findByChatname(chatname: string): Promise<ChatEntity | null>;
+  findByUserIdWithMessageUsers(
+    userId: UserId,
+    limit: number,
+    offset: number,
+  ): Promise<ChatEntityWithUserMessage[]>;
   upsertUserRelation(
     chatId: ChatId,
     userId: UserId,
@@ -31,7 +37,11 @@ export interface ChatRepo {
   ): Promise<CHAT_USER_RELATION | null>;
   removeUserRelation(chatId: ChatId, userId: UserId): Promise<void>;
   updateChatname(chatId: ChatId, newChatname: string): Promise<ChatEntity>;
-  addUser(chatId: ChatId, userId: UserId): Promise<ChatEntityWithUsers>;
+  addUserByChatId(chatId: ChatId, userId: UserId): Promise<ChatEntityWithUsers>;
+  addUserByChatname(
+    chatname: string,
+    userId: UserId,
+  ): Promise<ChatEntityWithUserMessage>;
   removeUser(chatId: ChatId, userId: UserId): Promise<ChatEntityWithUsers>;
   upsertUserKick(
     kickerId: UserId,

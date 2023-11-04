@@ -43,17 +43,28 @@ const userRoutes: FastifyPluginAsync = async (fastify) => {
     { schema: schema.getChats },
     async (request, reply) => {
       if (!request.user) throw new Error("User is not authenticated");
+      const { limit, offset } = request.query;
       const result = await application.getAllChats(
         create<UserId>(request.user.id),
+        Number(limit),
+        Number(offset),
       );
       // TODO: check if all errors handled
       if (result.isErr()) {
-        return reply
+        return await reply
           .code(SC.INTERNAL_SERVER_ERROR)
           .send({ message: result.error.message });
       }
 
-      return reply.code(SC.OK).send(result.value);
+      return await reply.code(SC.OK).send(
+        result.value.map((chat) => ({
+          ...chat,
+          messages: chat.messages.map((message) => ({
+            ...message,
+            date: message.date.toISOString(),
+          })),
+        })),
+      );
     },
   );
 };

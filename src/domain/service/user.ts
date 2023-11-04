@@ -1,3 +1,4 @@
+import type { InviteEntity } from "#domain/model/invite.js";
 import type { UserRepo } from "#repo/user.js";
 import type { Result } from "ts-results-es";
 import type {
@@ -6,8 +7,6 @@ import type {
   UsernameAlreadyExistsError,
   UserNotFoundError,
 } from "#model/user.js";
-import type { InviteEntity } from "#domain/model/invite.js";
-import type { ChatEntity } from "#domain/model/chat.js";
 
 export interface UserService {
   repo: UserRepo;
@@ -26,5 +25,4 @@ export interface UserService {
   getInvites(
     userId: UserId,
   ): Promise<Result<InviteEntity[], UserNotFoundError>>;
-  getAllChats(userId: UserId): Promise<Result<ChatEntity[], UserNotFoundError>>;
 }

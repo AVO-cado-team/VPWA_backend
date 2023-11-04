@@ -17,6 +17,7 @@ import {
   UsernameAlreadyExistsError,
   UserNotFoundError,
 } from "#model/user.js";
+import { log } from "#infrastructure/log.js";
 
 export class Application implements ApplicationService {
   constructor(
@@ -199,7 +200,7 @@ export class Application implements ApplicationService {
     return new Ok(undefined);
   }
 
-  async createChat(
+  async joinOrCreateChat(
     userId: UserId,
     chatname: string,
     isPrivate: boolean,
@@ -207,7 +208,12 @@ export class Application implements ApplicationService {
   ) {
     const user = await this.userService.repo.findById(userId);
     if (!user) return new Err(new UserNotFoundError(userId));
-    return await this.chatService.create(userId, chatname, isPrivate, title);
+    return await this.chatService.joinOrCreate(
+      userId,
+      chatname,
+      isPrivate,
+      title,
+    );
   }
 
   async deleteChatById(userId: UserId, chatId: ChatId) {
@@ -258,8 +264,17 @@ export class Application implements ApplicationService {
     return await this.chatService.kickUser(kickerId, chatId, kickedId);
   }
 
-  async getAllChats(userId: UserId) {
-    return await this.userService.getAllChats(userId);
+  async getAllChats(userId: UserId, limit: number, offset: number) {
+    const user = await this.userService.repo.findById(userId);
+    if (!user) return new Err(new UserNotFoundError(userId));
+
+    return new Ok(
+      await this.chatService.repo.findByUserIdWithMessageUsers(
+        userId,
+        limit,
+        offset,
+      ),
+    );
   }
 
   async getUserInvites(userId: UserId) {
@@ -288,13 +303,14 @@ export class Application implements ApplicationService {
       message,
       messageType,
     );
-    if (msgResult.isErr()) return msgResult;
+    if (msgResult.isErr()) return new Err(msgResult.error);
     this.rtcService.sendMessage(
       authorId,
       chatId,
       message,
       messageType,
       msgResult.value.id,
+      msgResult.value.date,
     );
 
     return msgResult;
