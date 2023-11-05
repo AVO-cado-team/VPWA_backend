@@ -23,30 +23,23 @@ socketServer.on("connect", (socket: RTCSocket) => {
     msg: "Socket is trying to connect with token",
     socketId: socket.id,
   });
-  application.connectUser(String(socket.handshake.auth.token), socket).then(
-    (isConnected) => {
-      if (!isConnected) {
+  const token = String(socket.handshake.auth.token);
+  application.connectUser(token, socket).then(
+    (userId) => {
+      if (!userId) {
         log.info({
           msg: "Socket is disconnected because of invalid token",
-          token: String(socket.handshake.auth.token),
+          token,
           socketId: socket.id,
         });
         socket.disconnect();
         return;
       }
-      socket.on("changeOnlineStatus", () => {
-        application
-          .setUserDND(String(socket.handshake.auth.token), socket)
-          .catch(() => {
-            socket.disconnect();
-          });
+      socket.on("changeOnlineStatus", (status) => {
+        application.setUserStatus(userId, status);
       });
       socket.on("disconnect", () => {
-        application
-          .disconnectUser(String(socket.handshake.auth.token), socket)
-          .catch(() => {
-            socket.disconnect();
-          });
+        application.disconnectUser(userId);
       });
     },
     (err) => {

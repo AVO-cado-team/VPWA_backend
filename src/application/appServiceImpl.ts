@@ -9,14 +9,10 @@ import type { UserService } from "#service/user.js";
 import type { AuthService } from "#service/auth.js";
 import type { ChatId } from "#domain/model/chat.js";
 import { InternalError } from "#domain/error.js";
-import type { UserId } from "#model/user.js";
+import type { USER_ONLINE_STATUS, UserId } from "#model/user.js";
 import { Err, Ok } from "ts-results-es";
 import { create } from "ts-opaque";
-import {
-  USER_ONLINE_STATUS,
-  UsernameAlreadyExistsError,
-  UserNotFoundError,
-} from "#model/user.js";
+import { UsernameAlreadyExistsError, UserNotFoundError } from "#model/user.js";
 import { log } from "#infrastructure/log.js";
 
 export class Application implements ApplicationService {
@@ -208,12 +204,15 @@ export class Application implements ApplicationService {
   ) {
     const user = await this.userService.repo.findById(userId);
     if (!user) return new Err(new UserNotFoundError(userId));
-    return await this.chatService.joinOrCreate(
+    const result = await this.chatService.joinOrCreate(
       userId,
       chatname,
       isPrivate,
       title,
     );
+    if (result.isErr()) return result;
+    this.rtcService.joinUserToChat(userId, result.value.id);
+    return result;
   }
 
   async deleteChatById(userId: UserId, chatId: ChatId) {
@@ -241,6 +240,7 @@ export class Application implements ApplicationService {
     if (!user) return new Err(new UserNotFoundError(invitedUsername));
     this.rtcService.sendInvite(actorId, user.id, chatId);
     // TODO: make names consistent: actor, invitee, user, etc.
+    // TODO: reorder - first call chateService, then rtcService
     return await this.chatService.inviteById(
       actorId,
       chatId,
@@ -318,36 +318,21 @@ export class Application implements ApplicationService {
 
   async connectUser(accessToken: string, socket: RTCSocket) {
     const user = await this.validateAccessToken(accessToken);
-    if (user.isErr()) return false;
+    if (user.isErr()) return null;
+    const userId = create<UserId>(user.value.id);
 
-    this.rtcService.updateUserStatus(
-      create<UserId>(user.value.id),
-      USER_ONLINE_STATUS.ONLINE,
-      socket,
-    );
+    this.rtcService.connectUser(userId, socket).catch((err: unknown) => {
+      log.error({ msg: "Error while connecting user", err });
+    });
 
-    return true;
+    return userId;
   }
 
-  async disconnectUser(accessToken: string, socket: RTCSocket) {
-    const user = await this.validateAccessToken(accessToken);
-    if (user.isErr()) return;
-
-    this.rtcService.updateUserStatus(
-      create<UserId>(user.value.id),
-      USER_ONLINE_STATUS.OFFLINE,
-      socket,
-    );
+  disconnectUser(userId: UserId) {
+    this.rtcService.disconnectUser(userId);
   }
 
-  async setUserDND(accessToken: string, socket: RTCSocket) {
-    const user = await this.validateAccessToken(accessToken);
-    if (user.isErr()) return;
-
-    this.rtcService.updateUserStatus(
-      create<UserId>(user.value.id),
-      USER_ONLINE_STATUS.DND,
-      socket,
-    );
+  setUserStatus(userId: UserId, status: USER_ONLINE_STATUS) {
+    this.rtcService.updateUserStatus(userId, status);
   }
 }

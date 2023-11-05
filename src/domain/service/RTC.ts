@@ -13,12 +13,12 @@ export interface RTCService {
     date: Date,
   ): void;
   sendInvite(inviter: UserId, invitee: UserId, chatName: string): void;
-  updateUserStatus(
-    userId: UserId,
-    status: USER_ONLINE_STATUS,
-    socket: Socket,
-  ): void;
+  updateUserStatus(userId: UserId, status: USER_ONLINE_STATUS): void;
   getUserStatus(userId: UserId): USER_ONLINE_STATUS;
   getChatUserStatus(chatId: ChatId): Map<UserId, USER_ONLINE_STATUS>;
+  initUsersStatus(userId: UserId, socket: Socket): void;
+  connectUser(userId: UserId, socket: Socket): Promise<void>;
+  disconnectUser(userId: UserId): void;
+  joinUserToChat(userId: UserId, chatId: ChatId): void;
   // sendUserCurrentText(roomId: string, message: string): Promise<void>;
 }

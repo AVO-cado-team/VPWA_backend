@@ -1,15 +1,18 @@
 import { USER_ONLINE_STATUS, UserNotFoundError } from "#domain/model/user.js";
-import type { RTCSocket } from "#presentation/socket/types.js";
 import type { MESSAGE_TYPE, MessageId } from "#domain/model/message.js";
+import type { RTCSocket } from "#presentation/socket/types.js";
 import type { UserRepo } from "#domain/repo/user.js";
 import type { UserId } from "#domain/model/user.js";
 import type { ChatId } from "#domain/model/chat.js";
 import type { RTCService } from "#service/RTC.js";
+import { create, type Opaque } from "ts-opaque";
 import { log } from "#infrastructure/log.js";
 import {
   ChatNotFoundInMapError,
   UserNotFoundInMapError,
 } from "#domain/model/RTC.js";
+
+export type UserIdChatId = Opaque<string, "UserIdChatId">;
 
 // TODO: Send message to all users in chats that user left from the chat
 export class RTCServiceImpl implements RTCService {
@@ -21,6 +24,7 @@ export class RTCServiceImpl implements RTCService {
   // PERF: UserToOnlineStatus = (UserId + USER_ONLINE_SATUS) = N * (36B + 7B) = N * 43B
   userToChats: Map<UserId, Set<ChatId>> = new Map();
   chatToUsers: Map<ChatId, Set<UserId>> = new Map();
+  userInChatTyping: Map<UserIdChatId, string> = new Map();
   // TODO: User external dependency for bidirectional map
   // PERF: ChatToUsers = ()
   constructor(public userRepo: UserRepo) {}
@@ -49,43 +53,65 @@ export class RTCServiceImpl implements RTCService {
       });
     }
   }
+  private createUserIdChatId(userId: UserId, chatId: ChatId): UserIdChatId {
+    return create<UserIdChatId>(`${userId}-${chatId}`);
+  }
   // TODO: Consider situation when user accepts invite. In this case we need to send message to all users in chat about new user. And add this user to chatToUsers map
   sendInvite(inviter: UserId, invitee: UserId, chatId: ChatId) {
-    log.info({ inviter, invitee, chatId });
+    log.info({ inviter, invitee, chatId, msg: "Send invite" });
     const socket = this.userToSocket.get(invitee);
     if (!socket) throw new UserNotFoundInMapError(invitee);
     socket.emit("invite", { inviter, chatId });
   }
-  // async initUsersStatus(
-  //   userId: UserId,
-  //   status: USER_ONLINE_STATUS,
-  //   socket: RTCSocket,
-  // ) {}
-  async updateUserStatus(
-    userId: UserId,
-    status: USER_ONLINE_STATUS,
-    socket: RTCSocket,
-  ) {
-    log.info({ userId, status, socketId: socket.id });
-    if (status === USER_ONLINE_STATUS.OFFLINE) {
-      this.notifyAboutNewUserStatus(userId, status);
-      this.userToOnlineStatus.delete(userId);
-      this.userToSocket.delete(userId);
-      this.removeUsersToChats(userId);
-    } else if (status === USER_ONLINE_STATUS.ONLINE) {
-      this.userToOnlineStatus.set(userId, USER_ONLINE_STATUS.ONLINE);
-      this.userToSocket.set(userId, socket);
-      await this.addUsersToChats(userId);
-      const initState = this.getInitStateForUser(userId);
-      socket.emit("chatsToUsersStatus", {
-        chatToUsers: initState,
-      });
-      this.notifyAboutNewUserStatus(userId, status);
-    } else {
-      // DND
-      this.userToOnlineStatus.set(userId, USER_ONLINE_STATUS.DND);
-      this.notifyAboutNewUserStatus(userId, status);
+  async connectUser(userId: UserId, socket: RTCSocket) {
+    log.info({ msg: "Connect user", userId, socketId: socket.id });
+    this.userToSocket.set(userId, socket);
+    this.userToOnlineStatus.set(userId, USER_ONLINE_STATUS.ONLINE);
+    this.userToSocket.set(userId, socket);
+    await this.addUsersToChats(userId);
+    this.notifyAboutNewUserStatus(userId, USER_ONLINE_STATUS.ONLINE);
+    this.initUsersStatus(userId, socket);
+  }
+  initUsersStatus(userId: UserId, socket: RTCSocket) {
+    const userChats = this.userToChats.get(userId);
+    if (!userChats) throw new UserNotFoundInMapError(userId);
+    const usersStatus: Record<UserId, USER_ONLINE_STATUS> = {};
+    for (const chatId of userChats) {
+      const chatUsers = this.chatToUsers.get(chatId);
+      if (!chatUsers) throw new ChatNotFoundInMapError(chatId);
+      for (const chatUserId of chatUsers) {
+        if (usersStatus[chatUserId] !== undefined) continue;
+        usersStatus[chatUserId] = this.getUserStatus(chatUserId);
+      }
     }
+    socket.emit("initUsersStatus", usersStatus);
+  }
+  updateUserStatus(userId: UserId, status: USER_ONLINE_STATUS) {
+    log.info({ userId, status, socketId: this.userToSocket.get(userId)?.id });
+    this.userToOnlineStatus.set(userId, status);
+    this.notifyAboutNewUserStatus(userId, status);
+  }
+
+  disconnectUser(userId: UserId) {
+    log.info({
+      msg: "Socket: Disconnect User",
+      userId,
+      socketId: this.userToSocket.get(userId)?.id,
+    });
+
+    this.notifyAboutNewUserStatus(userId, USER_ONLINE_STATUS.OFFLINE);
+    this.userToOnlineStatus.delete(userId);
+    this.userToSocket.delete(userId);
+    this.removeUsersToChats(userId);
+  }
+
+  joinUserToChat(userId: UserId, chatId: ChatId) {
+    const chatUsers = this.chatToUsers.get(chatId);
+    if (!chatUsers) throw new ChatNotFoundInMapError(chatId);
+    chatUsers.add(userId);
+    const userChats = this.userToChats.get(userId);
+    if (!userChats) throw new UserNotFoundInMapError(userId);
+    userChats.add(chatId);
   }
 
   getInitStateForUser(userId: UserId) {

@@ -1,4 +1,4 @@
-import type { USER_ONLINE_STATUS } from "#domain/model/user.js";
+import type { USER_ONLINE_STATUS, UserId } from "#domain/model/user.js";
 import type { MESSAGE_TYPE } from "#domain/model/message.js";
 import type { Server, Socket } from "socket.io";
 
@@ -30,6 +30,8 @@ type UserStatusUpdate = {
   status: USER_ONLINE_STATUS;
 };
 
+export type InitUserStatus = Record<string, USER_ONLINE_STATUS>;
+
 interface RTCClientToServerEvents {
   changeOnlineStatus: (status: USER_ONLINE_STATUS) => void;
 }
@@ -39,7 +41,7 @@ interface RTCServerToClientEvents {
   chatsToUsersStatus: (msg: ChatToUsersStatus) => void;
   invite: (msg: Invite) => void;
   userStatusUpdate: (msg: UserStatusUpdate) => void;
-  initUsersStatus: (msg: UserStatusUpdate[]) => void;
+  initUsersStatus: (msg: InitUserStatus) => void;
   // TODO: Add init online status for user. Send all users
 }
 

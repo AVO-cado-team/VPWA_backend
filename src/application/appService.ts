@@ -10,6 +10,7 @@ import type {
   UserPasswordNotValidError,
 } from "#model/auth.js";
 import type {
+  USER_ONLINE_STATUS,
   UserEntity,
   UserId,
   UsernameAlreadyExistsError,
@@ -215,8 +216,8 @@ export interface ApplicationService {
   // HACK: ----------- CHAT ----------------
 
   // FIX: ----------- Real Ttme Communication ----------------
-  connectUser(accessToken: string, socket: RTCSocket): Promise<boolean>;
-  setUserDND(accessToken: string, socket: RTCSocket): Promise<void>;
-  disconnectUser(accessToken: string, socket: RTCSocket): Promise<void>;
+  connectUser(accessToken: string, socket: RTCSocket): Promise<UserId | null>;
+  setUserStatus(userId: UserId, status: USER_ONLINE_STATUS): void;
+  disconnectUser(userId: UserId): void;
   // FIX: ----------- Real Ttme Communication ----------------
 }
