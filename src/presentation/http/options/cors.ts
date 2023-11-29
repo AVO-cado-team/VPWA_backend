@@ -4,13 +4,12 @@ import type { FastifyCorsOptions } from "@fastify/cors";
 export const corsOptions: FastifyCorsOptions = {
   origin: [
     "http://localhost:9000",
-    "http://localhost:9000/*",
-    "http://localhost:9000/#/*",
-    "http://localhost:9000/#/",
+    "http://localhost:9001",
     "http://10.62.45.180:9000",
   ],
   methods: ["OPTIONS", "GET", "POST", "PUT", "DELETE", "PATCH", "HEAD"],
   credentials: true,
+  preflight: true,
   allowedHeaders: [
     "Content-Type",
     "Authorization",

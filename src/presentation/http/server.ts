@@ -37,7 +37,7 @@ try {
   await server.register(underPressure, underPressureOptions);
   await server.register(rateLimit, rateLimitOptions);
   await server.register(fastifySwagger, fastifySwaggerOptions);
-  await server.register(helmet, { contentSecurityPolicy: false });
+  // await server.register(helmet, { contentSecurityPolicy: false });
   await server.register(fastifySwaggerUi, { routePrefix: "/docs" });
   await server.register(oauth2, oAuth2Options);
   await server.register(fastifyUserAgent);

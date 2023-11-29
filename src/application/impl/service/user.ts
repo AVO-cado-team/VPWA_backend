@@ -18,6 +18,8 @@ export class UserServiceImpl implements UserService {
   private customConfig: Config;
   constructor(public repo: UserRepo) {
     const numberDict = NumberDictionary.generate({ min: 1, max: 10000 });
+    // NOTE: Adjectives = 1400, Colors = 50, Animals = 350, Names = 4900, NumberDict = 10000 => 1400 * 50 * 350 * 4900 * 10000 = 1200500000000000
+    // If we take only Animals and colors with 10 numbers => 350 * 50 * 10 = 175000
     this.customConfig = {
       dictionaries: [adjectives, colors, animals, names, numberDict],
       separator: "",

@@ -15,12 +15,13 @@ export const enum MessageType {
 }
 
 export const refreshTokenCookieOptions: CookieSerializeOptions = {
-  priority: "high",
   httpOnly: true,
   maxAge: 60 * 60 * 24 * 2,
   path: `/${env.API_PREFIX}/${env.API_VERSION}/auth`,
+  // secure: env.ENVIRONMENT === "production",
   secure: env.ENVIRONMENT === "production",
-  sameSite: "lax",
+  // domain: "10.62.29.242",
+  sameSite: env.ENVIRONMENT === "production" ? "none" : "lax",
 };
 
 export const REFRESH_TOKEN = "refreshToken";
@@ -31,32 +32,27 @@ const filterNonEnglishCharacters = (string_: string): string =>
 export const sanitizeString = (string_: string): string =>
   filterNonEnglishCharacters(string_).replaceAll(/\W/g, "").toLowerCase();
 
-type toStr<T> = (input: T) => T extends Date ? string : T;
-type toStrRecursive<T> = { [K in keyof T]: toStr<T[K]> };
-// export const dateToString: toStrRecursive = (input) => {
-//   type Value = T[keyof T];
-//
-//   function transform(value: Value): Value {
-//     if (value instanceof Date) {
-//       return value.toISOString(); // Convert Date to ISO string
-//     } else if (typeof value === "object" && value !== null) {
-//       // Recursively transform objects
-//       for (const key in value) {
-//         value[key] = transform(value[key]);
-//       }
-//     }
-//     return value;
-//   }
-//
-//   const result: T = { ...input }; // Create a shallow copy
-//
-//   for (const key in result) {
-//     result[key] = transform(result[key]);
-//   }
-//
-//   return result;
-// };
-//
+type DateToStrDeep<T> = T extends Date
+  ? string
+  : T extends object
+  ? { [K in keyof T]: DateToStrDeep<T[K]> }
+  : T;
+
+export const dateToStrDeepFunc = <T>(input: T): DateToStrDeep<T> => {
+  if (input instanceof Date) {
+    return input.toISOString() as DateToStrDeep<T>;
+  } else if (typeof input === "object") {
+    if (input === null) return null as DateToStrDeep<T>;
+    const result = {} as any;
+    for (const key in input) {
+      result[key] = dateToStrDeepFunc(input[key]);
+    }
+    return result;
+  } else {
+    return input as DateToStrDeep<T>;
+  }
+};
+
 export const gracefulShutdownHandler = async (
   server: FastifyInstance,
   reason: string,

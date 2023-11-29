@@ -10,7 +10,7 @@ const eventEmitter = new EventEmitter();
 const createWorker = () => {
   const worker = cluster.fork();
   children.push(worker);
-  worker.on("message", (message: ProcessMessage) => {
+  worker.on("exit", (message: ProcessMessage) => {
     if (message.status === ProcessMessagesType.EXITING) {
       eventEmitter.emit("restarted");
     }
