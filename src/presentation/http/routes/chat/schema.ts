@@ -176,6 +176,21 @@ const getMessagesById = {
   tags: ["chat", "message"],
 };
 
+const quitChat = {
+  operationId: "quitChat",
+  title: "Quit chat",
+  description: "Quit chat",
+  params: Type.Object({
+    chatId: Id,
+  }),
+  response: {
+    200: { type: "null" },
+    "4xx": GeneralErrorDTO,
+    "5xx": GeneralErrorDTO,
+  },
+  tags: ["chat"],
+};
+
 export default {
   inviteUserByUsername,
   joinOrCreate,
@@ -186,4 +201,5 @@ export default {
   declineInvite,
   getInvites,
   getMessagesById,
+  quitChat,
 };

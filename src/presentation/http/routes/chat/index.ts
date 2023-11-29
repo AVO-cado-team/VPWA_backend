@@ -281,6 +281,35 @@ const chatRoutes: FastifyPluginAsync = async (fastify) => {
       );
     },
   );
+  fastifyT.delete(
+    "/quit/:chatId",
+    { schema: schema.quitChat },
+    async (request, reply) => {
+      if (!request.user) throw new UserNotAuthenticatedError();
+      const { chatId } = request.params;
+      const result = await application.quitChat(
+        create<UserId>(request.user.id),
+        create<ChatId>(chatId),
+      );
+
+      if (result.isErr()) {
+        if (
+          result.error instanceof ChatNotFoundError ||
+          result.error instanceof UserNotFoundError
+        ) {
+          return await reply
+            .code(SC.BAD_REQUEST)
+            .send({ message: result.error.message });
+        } else if (result.error instanceof ChatActionNotPermitted) {
+          return await reply
+            .code(SC.FORBIDDEN)
+            .send({ message: result.error.message });
+        } else {
+          throw new Error("Unknown error in quitChat endpoint");
+        }
+      }
+    },
+  );
 };
 
 export default chatRoutes;
