@@ -4,6 +4,8 @@ build
 **/src/infrastructure/sentenceGenerator/chatgptTypes.zod.ts
 ssl.*
 
+cert.pem
+key.pem
 
 # Logs
 logs
