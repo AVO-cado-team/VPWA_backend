@@ -20,5 +20,8 @@ export interface RTCService {
   connectUser(userId: UserId, socket: Socket): Promise<void>;
   disconnectUser(userId: UserId): void;
   joinUserToChat(userId: UserId, chatId: ChatId): void;
-  // sendUserCurrentText(roomId: string, message: string): Promise<void>;
+  setUserTyping(userId: UserId, chatId: ChatId, message: string): void;
+  userLeaveChat(userId: UserId, chatId: ChatId): void;
+  subscribeTyping(subscriber: UserId, autor: UserId, chatId: ChatId): void;
+  unsubscribeTyping(subscriber: UserId, autor: UserId, chatId: ChatId): void;
 }

@@ -4,9 +4,13 @@ import { log } from "#infrastructure/log.js";
 import { Server } from "socket.io";
 import env from "#config/env.js";
 
-const devOrigin = `http://localhost:9000`;
-const origins = [`http://${env.APP_HOST}:${env.APP_PORT}`].concat(
-  env.ENVIRONMENT === "development" ? [devOrigin] : [],
+const devOrigins = [
+  `http://localhost:9000`,
+  `http://localhost:9001`,
+  "http://10.62.45.180",
+];
+const origins = [`https://${env.APP_HOST}:${env.APP_PORT}`].concat(
+  env.ENVIRONMENT === "development" ? devOrigins : [],
 );
 const socketServer: RTCServer = new Server(env.SOCKET_PORT, {
   allowUpgrades: true,
@@ -40,6 +44,15 @@ socketServer.on("connect", (socket: RTCSocket) => {
       });
       socket.on("disconnect", () => {
         application.disconnectUser(userId);
+      });
+      socket.on("meTyping", ({ text, chatId }) => {
+        application.setUserTyping(userId, chatId, text);
+      });
+      socket.on("error", (err) => {
+        log.error(err);
+      });
+      socket.on("subscribeTyping", (msg) => {
+        application.subscribeTyping(userId, msg.authorId, msg.chatId);
       });
     },
     (err) => {

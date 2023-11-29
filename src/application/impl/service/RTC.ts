@@ -5,7 +5,7 @@ import type { UserRepo } from "#domain/repo/user.js";
 import type { UserId } from "#domain/model/user.js";
 import type { ChatId } from "#domain/model/chat.js";
 import type { RTCService } from "#service/RTC.js";
-import { create, type Opaque } from "ts-opaque";
+import { type Opaque } from "ts-opaque";
 import { log } from "#infrastructure/log.js";
 import {
   ChatNotFoundInMapError,
@@ -13,20 +13,20 @@ import {
 } from "#domain/model/RTC.js";
 
 export type UserIdChatId = Opaque<string, "UserIdChatId">;
+const logg = log.child({ module: "RTC" });
 
+// NOTE: User typing fearure: user send typing message to server, server notifies all users in chat about user typing,
+// DECISSION: Eaither
 // TODO: Send message to all users in chats that user left from the chat
 export class RTCServiceImpl implements RTCService {
   // NOTE: One user can have only one opened socket???. So there are no android + pc sessions at the same time.
-  userToSocket: Map<UserId, RTCSocket> = new Map();
-  // PERF:  UserToSocket size = (UserID + Socket) * N = N * (36B + sizeof(Socket))
-  // Socket.io memory usage scale linearly. LINK: https://socket.io/docs/v4/memory-usage/
-  userToOnlineStatus: Map<UserId, USER_ONLINE_STATUS> = new Map();
-  // PERF: UserToOnlineStatus = (UserId + USER_ONLINE_SATUS) = N * (36B + 7B) = N * 43B
+  userToSocket: Map<UserId, RTCSocket> = new Map(); // PERF:  UserToSocket size = (UserID + Socket) * N = N * (36B + sizeof(Socket))
+  userToOnlineStatus: Map<UserId, USER_ONLINE_STATUS> = new Map(); // PERF: UserToOnlineStatus = N * (UserId + USER_ONLINE_SATUS) = N * (36B + 7B) = N * 43B
   userToChats: Map<UserId, Set<ChatId>> = new Map();
   chatToUsers: Map<ChatId, Set<UserId>> = new Map();
-  userInChatTyping: Map<UserIdChatId, string> = new Map();
+  // NOTE: in this case is userA is in chats Chat1, Chat2 with userB, then userB will see userA typing in Chat1 and Chat2. This is not a but, but a feature
+  userTypingToWatchers: Map<UserId, Set<UserId>> = new Map();
   // TODO: User external dependency for bidirectional map
-  // PERF: ChatToUsers = ()
   constructor(public userRepo: UserRepo) {}
   sendMessage(
     authorId: UserId,
@@ -53,18 +53,51 @@ export class RTCServiceImpl implements RTCService {
       });
     }
   }
-  private createUserIdChatId(userId: UserId, chatId: ChatId): UserIdChatId {
-    return create<UserIdChatId>(`${userId}-${chatId}`);
+  // When user subscribes to typing we need to add user to watchers.
+  // But in the first place we need to check if user is in the chat
+  // NOTE: What if user starts to spam with typing messages?
+  setUserTyping(authorId: UserId, chatId: ChatId, message: string) {
+    const chatUsers = this.chatToUsers.get(chatId);
+    if (!chatUsers) {
+      log.debug({ chatId, msg: "Chat is not found" });
+      return;
+    }
+
+    if (!chatUsers.has(authorId)) {
+      logg.warn({
+        userId: authorId,
+        chatId,
+        msg: "User is pretending typing in chat he is not in",
+      });
+      return;
+    }
+    const watchers = this.userTypingToWatchers.get(authorId);
+    for (const userId of chatUsers) {
+      const socket = this.userToSocket.get(userId);
+      if (!socket) throw new UserNotFoundInMapError(userId);
+      logg.debug({
+        msg: "User typing",
+        watchers: [...(watchers ?? [])],
+        userId,
+        chatId,
+        message,
+      });
+      if (watchers?.has(userId)) {
+        socket.emit("userTyping", { chatId, authorId, text: message });
+      } else {
+        socket.emit("userTyping", { chatId, authorId, text: undefined });
+      }
+    }
   }
   // TODO: Consider situation when user accepts invite. In this case we need to send message to all users in chat about new user. And add this user to chatToUsers map
   sendInvite(inviter: UserId, invitee: UserId, chatId: ChatId) {
-    log.info({ inviter, invitee, chatId, msg: "Send invite" });
+    logg.info({ inviter, invitee, chatId, msg: "Send invite" });
     const socket = this.userToSocket.get(invitee);
     if (!socket) throw new UserNotFoundInMapError(invitee);
     socket.emit("invite", { inviter, chatId });
   }
   async connectUser(userId: UserId, socket: RTCSocket) {
-    log.info({ msg: "Connect user", userId, socketId: socket.id });
+    logg.info({ msg: "Connect user", userId, socketId: socket.id });
     this.userToSocket.set(userId, socket);
     this.userToOnlineStatus.set(userId, USER_ONLINE_STATUS.ONLINE);
     this.userToSocket.set(userId, socket);
@@ -87,13 +120,13 @@ export class RTCServiceImpl implements RTCService {
     socket.emit("initUsersStatus", usersStatus);
   }
   updateUserStatus(userId: UserId, status: USER_ONLINE_STATUS) {
-    log.info({ userId, status, socketId: this.userToSocket.get(userId)?.id });
+    logg.info({ userId, status, socketId: this.userToSocket.get(userId)?.id });
     this.userToOnlineStatus.set(userId, status);
     this.notifyAboutNewUserStatus(userId, status);
   }
 
   disconnectUser(userId: UserId) {
-    log.info({
+    logg.info({
       msg: "Socket: Disconnect User",
       userId,
       socketId: this.userToSocket.get(userId)?.id,
@@ -102,13 +135,28 @@ export class RTCServiceImpl implements RTCService {
     this.notifyAboutNewUserStatus(userId, USER_ONLINE_STATUS.OFFLINE);
     this.userToOnlineStatus.delete(userId);
     this.userToSocket.delete(userId);
+    this.removeFromWatchers(userId);
     this.removeUsersToChats(userId);
+    this.userTypingToWatchers.delete(userId);
+  }
+
+  private removeFromWatchers(userId: UserId) {
+    const userChats = this.userToChats.get(userId);
+    if (!userChats) throw new UserNotFoundInMapError(userId);
+    for (const chatId of userChats) {
+      const chatUsers = this.chatToUsers.get(chatId);
+      if (!chatUsers) throw new ChatNotFoundInMapError(chatId);
+      for (const chatUserId of chatUsers) {
+        const watchers = this.userTypingToWatchers.get(chatUserId);
+        watchers?.delete(userId);
+      }
+    }
   }
 
   joinUserToChat(userId: UserId, chatId: ChatId) {
     const chatUsers = this.chatToUsers.get(chatId);
-    if (!chatUsers) throw new ChatNotFoundInMapError(chatId);
-    chatUsers.add(userId);
+    if (!chatUsers) this.chatToUsers.set(chatId, new Set([userId]));
+    else chatUsers.add(userId);
     const userChats = this.userToChats.get(userId);
     if (!userChats) throw new UserNotFoundInMapError(userId);
     userChats.add(chatId);
@@ -138,6 +186,76 @@ export class RTCServiceImpl implements RTCService {
       chatUserStatus.set(userId, this.getUserStatus(userId));
     }
     return chatUserStatus;
+  }
+
+  userLeaveChat(userId: UserId, chatId: ChatId) {
+    const chatUsers = this.chatToUsers.get(chatId);
+    if (!chatUsers) throw new ChatNotFoundInMapError(chatId);
+    chatUsers.delete(userId);
+
+    const userChats = this.userToChats.get(userId);
+    if (!userChats) throw new UserNotFoundInMapError(userId);
+    userChats.delete(chatId);
+
+    const watchers = this.userTypingToWatchers.get(userId);
+    watchers?.delete(userId);
+  }
+
+  subscribeTyping(subscriber: UserId, autor: UserId, chatId: ChatId) {
+    const chatUsers = this.chatToUsers.get(chatId);
+    if (!chatUsers) throw new ChatNotFoundInMapError(chatId);
+    if (!chatUsers.has(subscriber)) {
+      logg.warn({
+        userId: subscriber,
+        chatId,
+        msg: "User subscribe to typing. Error: User is not in chat",
+      });
+      return;
+    }
+    const watchers = this.userTypingToWatchers.get(autor);
+    if (!watchers) {
+      this.userTypingToWatchers.set(autor, new Set([subscriber]));
+    } else {
+      watchers.add(subscriber);
+    }
+
+    log.info({
+      subscriber,
+      autor,
+      chatId,
+      msg: "User subscribe to typing",
+    });
+  }
+
+  unsubscribeTyping(subscriber: UserId, autor: UserId, chatId: ChatId) {
+    // TODO: Consider auto unsubscribe after some timeout so no resources will be wasted
+    const chatUsers = this.chatToUsers.get(chatId);
+    if (!chatUsers) throw new ChatNotFoundInMapError(chatId);
+    if (!chatUsers.has(subscriber)) {
+      logg.warn({
+        userId: subscriber,
+        chatId,
+        msg: "User unsubscribe to typing. Error: User is not in chat",
+      });
+      return;
+    }
+    const watchers = this.userTypingToWatchers.get(autor);
+    if (!watchers) {
+      logg.warn({
+        userId: subscriber,
+        autor,
+        chatId,
+        msg: "User unsubscribe to typing. Error: User is not in watchers",
+      });
+      return;
+    }
+    watchers.delete(subscriber);
+    log.info({
+      subscriber,
+      autor,
+      chatId,
+      msg: "User unsubscribe to typing",
+    });
   }
 
   private notifyAboutNewUserStatus(userId: UserId, status: USER_ONLINE_STATUS) {

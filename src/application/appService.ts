@@ -170,7 +170,7 @@ export interface ApplicationService {
     userId: UserId,
     chatId: ChatId,
   ): Promise<Result<void, InviteNotFoundError | ChatActionNotPermitted>>;
-  leaveChat(
+  quitChat(
     userId: UserId,
     chatId: ChatId,
   ): Promise<
@@ -219,5 +219,7 @@ export interface ApplicationService {
   connectUser(accessToken: string, socket: RTCSocket): Promise<UserId | null>;
   setUserStatus(userId: UserId, status: USER_ONLINE_STATUS): void;
   disconnectUser(userId: UserId): void;
+  setUserTyping(userId: UserId, chatId: ChatId, message: string): void;
+  subscribeTyping(subscriber: UserId, autor: UserId, chatId: ChatId): void;
   // FIX: ----------- Real Ttme Communication ----------------
 }

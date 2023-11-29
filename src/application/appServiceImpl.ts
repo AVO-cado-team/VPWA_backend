@@ -256,7 +256,8 @@ export class Application implements ApplicationService {
     return await this.chatService.declineInvitation(userId, chatId);
   }
 
-  async leaveChat(userId: UserId, chatId: ChatId) {
+  async quitChat(userId: UserId, chatId: ChatId) {
+    this.rtcService.userLeaveChat(userId, chatId);
     return await this.chatService.leaveChat(userId, chatId);
   }
 
@@ -334,5 +335,17 @@ export class Application implements ApplicationService {
 
   setUserStatus(userId: UserId, status: USER_ONLINE_STATUS) {
     this.rtcService.updateUserStatus(userId, status);
+  }
+
+  setUserTyping(userId: UserId, chatId: ChatId, message: string) {
+    this.rtcService.setUserTyping(userId, chatId, message);
+  }
+
+  subscribeTyping(subscriber: UserId, autor: UserId, chatId: ChatId) {
+    this.rtcService.subscribeTyping(subscriber, autor, chatId);
+  }
+
+  unsubscribeTyping(subscriber: UserId, autor: UserId, chatId: ChatId) {
+    this.rtcService.unsubscribeTyping(subscriber, autor, chatId);
   }
 }
