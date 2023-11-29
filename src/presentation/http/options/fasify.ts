@@ -52,9 +52,9 @@ export const fastifyOptions = {
     ? {
         http2: true,
         https: {
-          key: fs.readFileSync(path.join(__dirname, "../../../ssl.key")),
-          cert: fs.readFileSync(path.join(__dirname, "../../../ssl.crt")),
-          ca: fs.readFileSync(path.join(__dirname, "../../../ssl.ca")),
+          key: fs.readFileSync(path.join(__dirname, "../../../../key.pem")),
+          cert: fs.readFileSync(path.join(__dirname, "../../../../cert.pem")),
+          // ca: fs.readFileSync(path.join(__dirname, "../../../ssl.ca")),
         },
         clientErrorHandler: function clientErrorHandler(
           err: ConnectionError,
