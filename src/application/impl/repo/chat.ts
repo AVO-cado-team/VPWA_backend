@@ -162,6 +162,35 @@ export const chatRepo: ChatRepo = {
     };
   },
   async addUserByChatname(chatname, userId) {
+    const prev = await prisma.userOnChats.findFirst({
+      where: { chat: { chatname }, userId },
+      include: {
+        chat: {
+          include: {
+            users: { include: { user: true } },
+            messages: { take: 50, skip: 0, orderBy: { date: "asc" } },
+          },
+        },
+      },
+    });
+    // TODO: MAKE IT BETTER
+    if (prev)
+      return {
+        ...prev.chat,
+        id: create<ChatId>(prev.chatId),
+        users: prev.chat.users.map((user) => ({
+          ...user,
+          id: create<UserId>(user.userId),
+          username: user.user.username,
+        })),
+        messages: prev.chat.messages.map((message) => ({
+          ...message,
+          id: create<MessageId>(message.id),
+          chatId: create<ChatId>(message.chatId),
+          userId: create<UserId>(message.userId),
+        })),
+      };
+
     const userOnChats = await prisma.userOnChats.create({
       data: {
         chat: { connect: { chatname } },
