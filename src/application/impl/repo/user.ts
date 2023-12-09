@@ -111,7 +111,11 @@ export const userRepo: UserRepo = {
         chats: {
           every: {
             relation: {
-              in: [CHAT_USER_RELATION.USER, CHAT_USER_RELATION.ADMIN],
+              in: [
+                CHAT_USER_RELATION.USER,
+                CHAT_USER_RELATION.ADMIN,
+                CHAT_USER_RELATION.INVITED,
+              ],
             },
           },
         },

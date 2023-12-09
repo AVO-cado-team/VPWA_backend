@@ -52,7 +52,7 @@ try {
 }
 log.system(
   `HTTP server started: ${await server.listen({
-    port: Number(env.APP_PORT),
+    port: Number(env.HTTP_PORT),
     host: env.APP_HOST,
   })}`,
 );

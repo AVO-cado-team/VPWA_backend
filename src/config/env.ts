@@ -4,7 +4,7 @@ const env = load({
   ENVIRONMENT: ["development", "production", "test"],
   SOCKET_PORT: Number,
   APP_HOST: String,
-  APP_PORT: String,
+  HTTP_PORT: String,
   AUTH_MS_HOST: String,
   AUTH_MS_PORT: String,
   DATABASE_USER: String,

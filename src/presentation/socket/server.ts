@@ -7,11 +7,9 @@ import env from "#config/env.js";
 const devOrigins = [
   `http://localhost:9000`,
   `http://localhost:9001`,
-  "http://10.62.45.180",
+  `http://10.62.45.180`,
 ];
-const origins = [`https://${env.APP_HOST}:${env.APP_PORT}`].concat(
-  env.ENVIRONMENT === "development" ? devOrigins : [],
-);
+const origins = [`https://${env.APP_HOST}:${env.HTTP_PORT}`].concat(devOrigins);
 const socketServer: RTCServer = new Server(env.SOCKET_PORT, {
   allowUpgrades: true,
   cors: {
