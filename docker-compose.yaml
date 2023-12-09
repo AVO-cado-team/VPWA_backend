@@ -46,7 +46,7 @@ services:
   auth:
     user: root
     container_name: auth
-    image: ghcr.io/mykhailo-sichkaruk/auth-ms:v1.2.1
+    image: ghcr.io/mykhailo-sichkaruk/auth-ms:v1.2.2
     depends_on:
       auth_db:
         condition: service_healthy
