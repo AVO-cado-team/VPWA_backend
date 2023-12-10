@@ -140,12 +140,37 @@ export class ChatServiceImpl implements ChatService {
       }
     }
 
+    if (chat.isPrivate) {
+      return new Err(
+        new ChatActionNotPermitted(
+          chatId,
+          "You must be admin to invite user to private chat",
+        ),
+      );
+    }
+
     await this.repo.upsertUserRelation(
       chatId,
       userId,
       CHAT_USER_RELATION.INVITED,
     );
     return new Ok(undefined);
+  }
+
+  async getUserKicks(actorId: UserId, chatId: ChatId, userId: UserId) {
+    const chat = await this.repo.findByIdWithUsers(chatId);
+    if (!chat) return new Err(new ChatNotFoundError(chatId));
+    const actorInChat = chat.users.find((actor) => actor.id === actorId);
+    if (actorInChat === undefined)
+      return new Err(new ChatActionNotPermitted(chatId));
+    const userInChat = chat.users.find((user) => user.id === userId);
+    if (userInChat === undefined) return new Err(new UserNotFoundError(userId));
+
+    if (chat.adminId === actorId) {
+      return new Ok(await this.repo.getUserKicks(chatId, userId));
+    }
+
+    return new Err(new ChatActionNotPermitted(chatId));
   }
 
   async kickUser(kickerId: UserId, chatId: ChatId, kickedId: UserId) {

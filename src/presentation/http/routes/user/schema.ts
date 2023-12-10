@@ -1,6 +1,8 @@
 import {
   ChatsWithMwssagesUsersDTO,
   GeneralErrorDTO,
+  Id,
+  UserDTO,
 } from "#application/dtos.js";
 import { Type } from "@sinclair/typebox";
 
@@ -37,4 +39,19 @@ const getChats = {
   tags: ["user"],
 };
 
-export default { updateUsername, getChats };
+const getUserById = {
+  operationId: "getUserById",
+  title: "Get user by id",
+  description: "Get user data by userId id",
+  params: Type.Object({
+    userId: Id,
+  }),
+  response: {
+    200: UserDTO,
+    "4xx": GeneralErrorDTO,
+    "5xx": GeneralErrorDTO,
+  },
+  tags: ["user"],
+};
+
+export default { updateUsername, getChats, getUserById };

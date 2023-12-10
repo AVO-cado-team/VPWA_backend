@@ -12,7 +12,7 @@ async function errorHandler(
   if (error.statusCode && error.statusCode < SC.INTERNAL_SERVER_ERROR) {
     return reply.code(error.statusCode).send({ message: error.message });
   } else {
-    return reply.status(SC.INTERNAL_SERVER_ERROR).send({
+    return await reply.status(SC.INTERNAL_SERVER_ERROR).send({
       message:
         "Something went wrong on the server, please try again later, we are working on it.",
     });

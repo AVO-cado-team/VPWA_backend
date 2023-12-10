@@ -1,11 +1,18 @@
-import type { ProcessMessage } from "./presentation/http/utils/types.js";
-import { ProcessMessagesType } from "./presentation/http/utils/types.js";
 import type { Worker } from "node:cluster";
 import EventEmitter from "node:events";
 import cluster from "node:cluster";
 
 const children: Worker[] = [];
 const eventEmitter = new EventEmitter();
+
+export const enum ProcessMessagesType {
+  EXITING = "EXITING",
+  FORCE_GRACEFUL_SHUTDOWN = "FORCE_GRACEFUL_SHUTDOWN",
+}
+
+export type ProcessMessage = {
+  status: ProcessMessagesType;
+};
 
 const createWorker = () => {
   const worker = cluster.fork();

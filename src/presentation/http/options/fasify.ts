@@ -31,9 +31,7 @@ const prodTargets = [
 const fastifyBaseOptions = {
   logger: {
     transport: {
-      targets: [
-        ...(env.ENVIRONMENT === "production" ? prodTargets : devTargets),
-      ],
+      targets: [...devTargets],
     },
   },
   ajv: {

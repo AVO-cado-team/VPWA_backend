@@ -36,7 +36,7 @@ const chatRoutes: FastifyPluginAsync = async (fastify) => {
 
       if (result.isErr()) {
         if (result.error instanceof ChatNameAlreadyExistsError) {
-          return reply
+          return await reply
             .code(SC.BAD_REQUEST)
             .send({ message: result.error.message });
         } else if (result.error instanceof UserNotFoundError) {
@@ -53,7 +53,7 @@ const chatRoutes: FastifyPluginAsync = async (fastify) => {
         }
       }
 
-      return reply.code(SC.OK).send(result.value);
+      return await reply.code(SC.OK).send(result.value);
     },
   );
   fastifyT.delete(
@@ -308,6 +308,70 @@ const chatRoutes: FastifyPluginAsync = async (fastify) => {
           throw new Error("Unknown error in quitChat endpoint");
         }
       }
+    },
+  );
+  fastifyT.patch(
+    "/kick/username",
+    { schema: schema.kickByUsername },
+    async (request, reply) => {
+      if (!request.user) throw new UserNotAuthenticatedError();
+      const { chatId, username } = request.body;
+      const result = await application.kickUserInChatByUsername(
+        create<UserId>(request.user.id),
+        create<ChatId>(chatId),
+        username,
+      );
+
+      if (result.isErr()) {
+        if (
+          result.error instanceof ChatNotFoundError ||
+          result.error instanceof UserNotFoundError
+        ) {
+          return await reply
+            .code(SC.BAD_REQUEST)
+            .send({ message: result.error.message });
+        } else if (result.error instanceof ChatActionNotPermitted) {
+          return await reply
+            .code(SC.FORBIDDEN)
+            .send({ message: result.error.message });
+        } else {
+          throw new Error("Unknown error in inviteUserByUsername endpoint");
+        }
+      }
+
+      return await reply.code(SC.OK).send({ message: "User invited" });
+    },
+  );
+  fastifyT.get(
+    "/kick/:chatId/:username",
+    { schema: schema.getUserKicks },
+    async (request, reply) => {
+      if (!request.user) throw new UserNotAuthenticatedError();
+      const { chatId, username } = request.params;
+      const result = await application.kickUserInChatByUsername(
+        create<UserId>(request.user.id),
+        create<ChatId>(chatId),
+        username,
+      );
+
+      if (result.isErr()) {
+        if (
+          result.error instanceof ChatNotFoundError ||
+          result.error instanceof UserNotFoundError
+        ) {
+          return await reply
+            .code(SC.BAD_REQUEST)
+            .send({ message: result.error.message });
+        } else if (result.error instanceof ChatActionNotPermitted) {
+          return await reply
+            .code(SC.FORBIDDEN)
+            .send({ message: result.error.message });
+        } else {
+          throw new Error("Unknown error in inviteUserByUsername endpoint");
+        }
+      }
+
+      return await reply.code(SC.OK).send({ message: "User invited" });
     },
   );
 };

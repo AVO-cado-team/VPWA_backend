@@ -49,6 +49,15 @@ export type meTyping = {
   chatId: ChatId;
 };
 
+export type UserJoinChat = {
+  chatId: ChatId;
+  userId: UserId;
+};
+
+export type ChatDelete = {
+  chatId: ChatId;
+};
+
 interface RTCClientToServerEvents {
   changeOnlineStatus: (status: USER_ONLINE_STATUS) => void;
   meTyping: (data: meTyping) => void;
@@ -63,7 +72,8 @@ interface RTCServerToClientEvents {
   userStatusUpdate: (msg: UserStatusUpdate) => void;
   initUsersStatus: (msg: InitUserStatus) => void;
   userTyping: (msg: UserTypingMessage) => void;
-  // TODO: Add init online status for user. Send all users
+  newUserJoinChat: (msg: UserJoinChat) => void;
+  chatDeleted: (msg: ChatDelete) => void;
 }
 
 interface RTCInterServerEvents {

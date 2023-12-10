@@ -53,8 +53,6 @@ export const log = pino.pino({
   level: "debug",
   prettifier: pinoPretty,
   transport: {
-    targets: [
-      ...(env.ENVIRONMENT === "development" ? devTargets : prodTargets),
-    ],
+    targets: devTargets,
   },
 });

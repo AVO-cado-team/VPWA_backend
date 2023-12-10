@@ -183,6 +183,13 @@ export interface ApplicationService {
   ): Promise<
     Result<void, ChatNotFoundError | UserNotFoundError | ChatActionNotPermitted>
   >;
+  kickUserInChatByUsername(
+    kickerId: UserId,
+    chatId: ChatId,
+    kickedUsername: string,
+  ): Promise<
+    Result<void, ChatNotFoundError | UserNotFoundError | ChatActionNotPermitted>
+  >;
   getUserInvites(
     userId: UserId,
   ): Promise<Result<InviteEntity[], UserNotFoundError>>;
@@ -222,4 +229,6 @@ export interface ApplicationService {
   setUserTyping(userId: UserId, chatId: ChatId, message: string): void;
   subscribeTyping(subscriber: UserId, autor: UserId, chatId: ChatId): void;
   // FIX: ----------- Real Ttme Communication ----------------
+  //
+  getUserById(userId: UserId): Promise<Result<UserEntity, UserNotFoundError>>;
 }

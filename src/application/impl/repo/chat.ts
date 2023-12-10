@@ -368,7 +368,14 @@ export const chatRepo: ChatRepo = {
         chat: {
           include: {
             users: {
-              where: { relation: { not: CHAT_USER_RELATION.KICKED } },
+              where: {
+                relation: {
+                  notIn: [
+                    CHAT_USER_RELATION.KICKED,
+                    CHAT_USER_RELATION.INVITED,
+                  ],
+                },
+              },
               include: { user: true },
             },
             messages: {

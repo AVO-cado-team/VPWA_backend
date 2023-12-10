@@ -212,6 +212,7 @@ export class Application implements ApplicationService {
     );
     if (result.isErr()) return result;
     this.rtcService.joinUserToChat(userId, result.value.id);
+    this.rtcService.newUserJoinChat(userId, result.value.id);
     return result;
   }
 
@@ -231,24 +232,22 @@ export class Application implements ApplicationService {
     return await this.chatService.inviteById(actorId, chatId, invitedUserId);
   }
 
-  async inviteUserByUsername(
-    actorId: UserId,
-    chatId: ChatId,
-    invitedUsername: string,
-  ) {
-    const user = await this.userService.repo.findByUsername(invitedUsername);
-    if (!user) return new Err(new UserNotFoundError(invitedUsername));
-    this.rtcService.sendInvite(actorId, user.id, chatId);
-    // TODO: make names consistent: actor, invitee, user, etc.
-    // TODO: reorder - first call chateService, then rtcService
-    return await this.chatService.inviteById(
-      actorId,
+  async inviteUserByUsername(inviter: UserId, chatId: ChatId, invitee: string) {
+    const inviteeUser = await this.userService.repo.findByUsername(invitee);
+    if (!inviteeUser) return new Err(new UserNotFoundError(invitee));
+    const result = await this.chatService.inviteById(
+      inviter,
       chatId,
-      create<UserId>(user.id),
+      create<UserId>(inviteeUser.id),
     );
+
+    if (result.isErr()) return result;
+    this.rtcService.sendInvite(inviter, inviteeUser.id, chatId);
+    return result;
   }
 
   async acceptInvite(userId: UserId, chatId: ChatId) {
+    this.rtcService.newUserJoinChat(userId, chatId);
     return await this.chatService.acceptInvitation(userId, chatId);
   }
 
@@ -263,6 +262,17 @@ export class Application implements ApplicationService {
 
   async kickUserInChat(kickerId: UserId, chatId: ChatId, kickedId: UserId) {
     return await this.chatService.kickUser(kickerId, chatId, kickedId);
+  }
+
+  async kickUserInChatByUsername(
+    kickerId: UserId,
+    chatId: ChatId,
+    kickedUsername: string,
+  ) {
+    const kickedUseer =
+      await this.userService.repo.findByUsername(kickedUsername);
+    if (!kickedUseer) return new Err(new UserNotFoundError(kickedUsername));
+    return await this.chatService.kickUser(kickerId, chatId, kickedUseer.id);
   }
 
   async getAllChats(userId: UserId, limit: number, offset: number) {
@@ -297,7 +307,7 @@ export class Application implements ApplicationService {
     message: string,
     messageType: MESSAGE_TYPE,
   ) {
-    // TODO: Consider situation when users sends malitios messages to the chat he is not in.
+    // TODO: Consider situation when users sends malisious messages to the chat he is not in.
     const msgResult = await this.chatService.sendMessage(
       authorId,
       chatId,
@@ -347,5 +357,11 @@ export class Application implements ApplicationService {
 
   unsubscribeTyping(subscriber: UserId, autor: UserId, chatId: ChatId) {
     this.rtcService.unsubscribeTyping(subscriber, autor, chatId);
+  }
+
+  async getUserById(userId: UserId) {
+    const user = await this.userService.repo.findById(userId);
+    if (!user) return new Err(new UserNotFoundError(userId));
+    return new Ok(user);
   }
 }

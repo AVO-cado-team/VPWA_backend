@@ -96,6 +96,16 @@ export class RTCServiceImpl implements RTCService {
     if (!socket) throw new UserNotFoundInMapError(invitee);
     socket.emit("invite", { inviter, chatId });
   }
+
+  chatDelete(chatId: ChatId) {
+    const chatUsers = this.chatToUsers.get(chatId);
+    if (!chatUsers) throw new ChatNotFoundInMapError(chatId);
+    for (const userId of chatUsers) {
+      const socket = this.userToSocket.get(userId);
+      if (!socket) throw new UserNotFoundInMapError(userId);
+      socket.emit("chatDeleted", { chatId });
+    }
+  }
   async connectUser(userId: UserId, socket: RTCSocket) {
     logg.info({ msg: "Connect user", userId, socketId: socket.id });
     this.userToSocket.set(userId, socket);
@@ -106,8 +116,12 @@ export class RTCServiceImpl implements RTCService {
     this.initUsersStatus(userId, socket);
   }
   initUsersStatus(userId: UserId, socket: RTCSocket) {
+    const loggg = logg.child({ action: "initUsersStatus" });
     const userChats = this.userToChats.get(userId);
-    if (!userChats) throw new UserNotFoundInMapError(userId);
+    if (!userChats) {
+      loggg.warn({ userId, msg: "Actor User is not found" });
+      return;
+    }
     const usersStatus: Record<UserId, USER_ONLINE_STATUS> = {};
     for (const chatId of userChats) {
       const chatUsers = this.chatToUsers.get(chatId);
@@ -150,6 +164,25 @@ export class RTCServiceImpl implements RTCService {
         const watchers = this.userTypingToWatchers.get(chatUserId);
         watchers?.delete(userId);
       }
+    }
+  }
+
+  /**
+   * When UserB joins chat while UserA is online, we notify UserA about UserB joining chat
+   * @param userId
+   * @param chatId
+   * @returns
+   * @memberof RTCServiceImpl
+   * @throws UserNotFoundInMapError
+   * @throws ChatNotFoundInMapError
+   */
+  newUserJoinChat(userId: UserId, chatId: ChatId) {
+    const chatUsers = this.chatToUsers.get(chatId);
+    if (!chatUsers) throw new ChatNotFoundInMapError(chatId);
+    for (const chatUserId of chatUsers) {
+      const socket = this.userToSocket.get(chatUserId);
+      if (!socket) throw new UserNotFoundInMapError(chatUserId);
+      socket.emit("newUserJoinChat", { userId, chatId });
     }
   }
 
@@ -259,22 +292,36 @@ export class RTCServiceImpl implements RTCService {
   }
 
   private notifyAboutNewUserStatus(userId: UserId, status: USER_ONLINE_STATUS) {
+    const loggg = logg.child({ action: "notifyAboutNewUserStatus" });
     const userChats = this.userToChats.get(userId);
-    if (!userChats) throw new UserNotFoundInMapError(userId);
+    if (!userChats) {
+      loggg.warn({ userId, msg: "Actore User is not found" });
+      return;
+    }
     for (const chatId of userChats) {
       const chatUsers = this.chatToUsers.get(chatId);
-      if (!chatUsers) throw new ChatNotFoundInMapError(chatId);
+      if (!chatUsers) {
+        loggg.warn({ chatId, msg: "Chat is not found" });
+        return;
+      }
       for (const chatUserId of chatUsers) {
         const socket = this.userToSocket.get(chatUserId);
-        if (!socket) throw new UserNotFoundInMapError(chatUserId);
+        if (!socket) {
+          loggg.warn({ userId: chatUserId, msg: "User is not found" });
+          return;
+        }
         socket.emit("userStatusUpdate", { userId, status });
       }
     }
   }
 
   private async addUsersToChats(userId: UserId) {
+    const loggg = logg.child({ action: "addUsersToChats" });
     const userChats = await this.userRepo.findByIdWithChats(userId);
-    if (!userChats) throw new UserNotFoundError(userId);
+    if (!userChats) {
+      loggg.warn({ userId, msg: "Actor User is not found" });
+      return;
+    }
     for (const chat of userChats.chats) {
       const chatInMap = this.chatToUsers.get(chat.id);
       if (chatInMap === undefined) {

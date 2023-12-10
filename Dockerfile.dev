@@ -1,4 +1,4 @@
-FROM node:21.4 as build
+FROM node:20.2 as build
 
 WORKDIR /app/
 
@@ -21,7 +21,7 @@ RUN [ "npm", "prune", "--omit=dev", "--omit-peer" ]
 RUN [ "rm", "-rf", "./src", "./tsconfig.json" ]
 
 
-FROM node:21.4 as prod
+FROM node:20.2 as prod
 ENV NODE_ENV=production
 
 USER root

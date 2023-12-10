@@ -63,6 +63,16 @@ export interface ChatService {
   ): Promise<
     Result<void, ChatNotFoundError | ChatActionNotPermitted | UserNotFoundError>
   >;
+  getUserKicks(
+    actorId: UserId,
+    chatId: ChatId,
+    userId: UserId,
+  ): Promise<
+    Result<
+      number,
+      ChatNotFoundError | UserNotFoundError | ChatActionNotPermitted
+    >
+  >;
   acceptInvitation(
     userId: UserId,
     chatId: ChatId,

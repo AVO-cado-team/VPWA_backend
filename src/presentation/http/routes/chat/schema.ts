@@ -3,8 +3,8 @@ import {
   ChatWithMwssagesUsersDTO,
   GeneralErrorDTO,
   Id,
-  InviteDTO,
   InvitesDTO,
+  UsernameString,
 } from "#application/dtos.js";
 import type { Static } from "@sinclair/typebox";
 import { Type } from "@sinclair/typebox";
@@ -67,6 +67,10 @@ const InviteActionRequest = Type.Object({
   userId: Id,
 });
 
+const InviteActionReply = Type.Object({
+  chatId: Id,
+});
+
 const deleteChatById = {
   operationId: "deleteChatById",
   title: "Delete chat by id",
@@ -123,7 +127,7 @@ const acceptInvite = {
   operationId: "acceptInvite",
   title: "Accept invite",
   description: "Accept invite",
-  body: InviteActionRequest,
+  body: InviteActionReply,
   response: {
     200: { type: "null" },
     "4xx": GeneralErrorDTO,
@@ -136,7 +140,7 @@ const declineInvite = {
   operationId: "declineInvite",
   title: "Decline invite",
   description: "Decline invite",
-  body: InviteActionRequest,
+  body: InviteActionReply,
   response: {
     200: { type: "null" },
     "4xx": GeneralErrorDTO,
@@ -191,6 +195,36 @@ const quitChat = {
   tags: ["chat"],
 };
 
+const kickByUsername = {
+  operationId: "kickByUsername",
+  title: "Kick user by username",
+  description:
+    "Kick user by username. If you are admin then user will be kicked. But if you are not admin then user will be promoted to kick. 3 kick promote user to kicked",
+  body: InviteUserByUsernameRequest,
+  response: {
+    200: { type: "null" },
+    "4xx": GeneralErrorDTO,
+    "5xx": GeneralErrorDTO,
+  },
+  tags: ["chat", "kick"],
+};
+
+const getUserKicks = {
+  operationId: "getUserKicks",
+  title: "Get user kicks",
+  description: "Get number of kicks for the user in the chat.",
+  params: Type.Object({
+    chatId: Id,
+    username: UsernameString,
+  }),
+  response: {
+    200: { type: "null" },
+    "4xx": GeneralErrorDTO,
+    "5xx": GeneralErrorDTO,
+  },
+  tags: ["chat", "kick"],
+};
+
 export default {
   inviteUserByUsername,
   joinOrCreate,
@@ -202,4 +236,6 @@ export default {
   getInvites,
   getMessagesById,
   quitChat,
+  kickByUsername,
+  getUserKicks,
 };

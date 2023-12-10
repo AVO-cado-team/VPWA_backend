@@ -1,5 +1,8 @@
 import type { TypeBoxTypeProvider } from "@fastify/type-provider-typebox";
-import { ChatNotFoundError } from "#domain/model/chat.js";
+import {
+  ChatActionNotPermitted,
+  ChatNotFoundError,
+} from "#domain/model/chat.js";
 import { UserNotFoundError } from "#domain/model/user.js";
 import { MESSAGE_TYPE } from "#domain/model/message.js";
 import { StatusCodes as SC } from "http-status-codes";
@@ -30,9 +33,12 @@ const messageRoutes: FastifyPluginAsync = async (fastify) => {
         return await reply.status(SC.NOT_FOUND).send({
           message: result.error.message,
         });
-      }
-      if (result.error instanceof UserNotFoundError) {
+      } else if (result.error instanceof UserNotFoundError) {
         return await reply.status(SC.NOT_FOUND).send({
+          message: result.error.message,
+        });
+      } else if (result.error instanceof ChatActionNotPermitted) {
+        return await reply.status(SC.FORBIDDEN).send({
           message: result.error.message,
         });
       }

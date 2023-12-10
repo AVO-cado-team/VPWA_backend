@@ -18,11 +18,11 @@ export default fp(async (fastify) => {
       const userResult = await application.validateAccessToken(token[1]);
       if (userResult.isErr()) {
         if (userResult.error instanceof InternalError)
-          return reply
+          return await reply
             .code(SC.INTERNAL_SERVER_ERROR)
             .send({ message: userResult.error.message });
         else
-          return reply
+          return await reply
             .code(SC.UNAUTHORIZED)
             .send({ message: userResult.error.message });
       }
